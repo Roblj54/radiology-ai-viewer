@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radiology AI Viewer — Bilingual ES/EN</title>
+  <meta name="description" content="Visor de imágenes médicas con IA — versión bilingüe (ES/EN) con conmutador de idioma, slices y marcadores simulados." />
+  <style>
+    :root{
+      --bg: #f4f7f9;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --ink-2:#475569;
+      --line:#e5e7eb;
+      --primary:#0ea5a6;
+      --primary-ink:#043f40;
+      --primary-10:#e6f7f7;
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --alert:#ef4444;
+      --focus:#2563eb;
+      --kbd:#eef2ff;
+      --radius: 12px;
+      --shadow: 0 6px 20px rgba(2, 43, 56, .08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--ink); background:var(--bg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    h1,h2,h3{margin:0 0 .5rem} h2{font-size:1.1rem} p{margin:.25rem 0}
+    .muted{color:var(--ink-2)} .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    button,input,select{font:inherit}
+    kbd{background:var(--kbd); border:1px solid #dbeafe; border-bottom-width:2px; padding:.1rem .35rem; border-radius:6px; font-size:.85rem}
+
+    header.appbar{position:sticky;top:0;z-index:1000;background:var(--panel);border-bottom:1px solid var(--line)}
+    .appbar-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:1rem;padding:.75rem 1rem}
+    .brand{display:flex;align-items:center;gap:.6rem;font-weight:700;letter-spacing:.2px}
+    .brand-badge{width:36px;height:36px;border-radius:10px;background: radial-gradient(120% 120% at 20% 20%, #15b8ba 0%, #0ea5a6 45%, #0b7e7f 100%);display:grid;place-items:center;color:#fff;font-weight:800;box-shadow: var(--shadow)}
+    .searchbox{flex:1;display:flex;align-items:center;gap:.5rem;background:var(--bg);border:1px solid var(--line);padding:.4rem .6rem;border-radius:999px}
+    .searchbox input{width:100%;border:0;background:transparent;outline:none}
+    .app-actions{display:flex;align-items:center;gap:.5rem}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--line);background:var(--panel);padding:.5rem .75rem;border-radius:10px;cursor:pointer}
+    .btn:hover{box-shadow:var(--shadow)} .btn-primary{background: var(--primary);border-color: transparent;color:#fff} .btn-primary:hover{filter:brightness(0.98)}
+    .btn-ghost{background: transparent; border-color: transparent}
+
+    /* Layout */
+    .shell{max-width:1400px;margin:0 auto;padding:1rem;display:grid;gap:1rem;grid-template-columns: 300px 1fr 360px;grid-template-rows: auto auto 1fr auto;grid-template-areas:"toolbar toolbar toolbar""left viewer right""left controls right""status status status";min-height: calc(100vh - 70px)}
+    .toolbar{grid-area:toolbar;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.5rem;box-shadow:var(--shadow)}
+    .toolgroup{display:flex;gap:.5rem;padding:.25rem;background:var(--primary-10);border-radius:10px}
+    .tool{padding:.45rem .65rem;border-radius:8px;border:1px solid transparent;background:transparent;cursor:pointer}
+    .tool[aria-pressed="true"], .tool:hover{background:#ffffff;border-color:var(--line)} .tool .label{font-size:.9rem}
+
+    .left{grid-area:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem;display:flex;flex-direction:column;gap:.75rem;box-shadow:var(--shadow);min-height:0}
+    .filter-row{display:flex;gap:.5rem}
+    .chip{padding:.35rem .6rem;border:1px solid var(--line);border-radius:999px;background:#fff;cursor:pointer;font-size:.9rem}
+    .chip[aria-pressed="true"]{background:var(--primary-10);border-color:#b6ecec}
+    .study-list{overflow:auto;border-top:1px dashed var(--line);padding-top:.5rem}
+    .study{display:flex;gap:.6rem;padding:.55rem;border:1px solid var(--line);border-radius:10px;background:#fff;margin-bottom:.5rem;cursor:pointer}
+    .study:hover{box-shadow:var(--shadow)} .study.active{outline:2px solid #0ea5a6}
+    .thumb{width:54px;height:54px;border-radius:8px;background:linear-gradient(145deg, #cfe9ea, #eaf6f7);display:grid;place-items:center;color:var(--primary-ink);font-weight:700;border:1px solid #d6f2f2}
+    .study .meta{font-size:.88rem} .study .meta .tag{font-size:.75rem;padding:.1rem .4rem;border-radius:6px;background:var(--primary-10);color:var(--primary-ink);border:1px solid #b6ecec}
+
+    .viewer{grid-area:viewer;position:relative;background:#0b1b23;border:1px solid #0f2a32;border-radius:var(--radius);overflow:hidden;display:grid;place-items:center;min-height:420px}
+    .viewport{width:100%;height:100%;display:grid;place-items:center;position:relative}
+    .dicom{width:100%;height:100%;max-height:720px;max-width:1000px;background:radial-gradient(1200px 600px at 50% 30%, #123646 0%, #0d2831 55%, #091a20 100%);border:1px solid #0f2a32;border-radius:8px;position:relative;overflow:hidden}
+    .dicom.mod-CT{background:radial-gradient(1200px 600px at 50% 40%, #2a3b46 0%, #0e2a33 60%, #08161b 100%)}
+    .dicom.mod-RX{background:radial-gradient(1200px 600px at 50% 50%, #1c2430 0%, #0e1820 60%, #070e12 100%)}
+    .dicom.mod-MRI{background:radial-gradient(1200px 600px at 50% 35%, #24314a 0%, #0f1b2f 55%, #091222 100%)}
+    .overlay{position:absolute;inset:0;pointer-events:none;color:#d1f4f3;font-size:.85rem;display:flex;flex-direction:column;justify-content:space-between;padding:.6rem}
+    .overlay .grid{--gap: 40px;position:absolute;inset:0;background:linear-gradient(to right, rgba(255,255,255,.04) 1px, transparent 1px),linear-gradient(to bottom, rgba(255,255,255,.04) 1px, transparent 1px);background-size: var(--gap) var(--gap);opacity:.35}
+    .overlay .hud{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
+    .hud .pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:.25rem .6rem;backdrop-filter: blur(6px)}
+    .ai-badge{position:absolute;bottom:12px;right:12px;background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(134,239,172,.35);padding:.25rem .65rem;border-radius:999px;font-weight:600;backdrop-filter: blur(6px)}
+    .cursor-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.25);color:#cde6ff;padding:.35rem .6rem;border-radius:8px;font-size:.9rem}
+
+    /* IA markers */
+    .ai-markers{position:absolute;inset:0;pointer-events:none}
+    .marker{position:absolute;transform:translate(-50%,-50%);}
+    .marker .dot{width:14px;height:14px;border-radius:50%;border:2px solid #86efac;background:rgba(34,197,94,.15);box-shadow:0 0 0 3px rgba(134,239,172,.15)}
+    .marker .lbl{margin-top:.2rem;color:#e9fbf6;font-size:.75rem;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+    .marker.low{opacity:.45;filter:saturate(.8)}
+
+    /* Controls: slice scrubber + filmstrip */
+    .controls{grid-area:controls;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.6rem .75rem;box-shadow:var(--shadow)}
+    .scrub{display:grid;grid-template-columns:auto 1fr auto;gap:.6rem;align-items:center}
+    .scrub .btn{min-width:40px;justify-content:center}
+    .scrub output{min-width:70px;text-align:right}
+    .filmstrip{margin-top:.6rem;display:flex;gap:.4rem;overflow:auto;padding:.25rem 0}
+    .tile{flex:0 0 auto;width:60px;height:46px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(145deg, #cfe9ea, #eaf6f7);position:relative;cursor:pointer}
+    .tile::after{content:attr(data-i);position:absolute;bottom:4px;right:6px;font-size:.7rem;color:#0b3a45;background:#ffffffaa;padding:.05rem .3rem;border-radius:6px}
+    .tile.active{outline:2px solid var(--primary)}
+
+    .right{grid-area:right;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem;display:flex;flex-direction:column;gap:.75rem;box-shadow:var(--shadow);min-height:0}
+    .card{border:1px solid var(--line);border-radius:10px;padding:.75rem;background:#fff}
+    .switch{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.45rem .6rem;border:1px solid var(--line);border-radius:10px;background:#fff}
+    .switch input{accent-color: var(--primary)} .slider-row{display:flex;align-items:center;gap:.75rem}
+    .slider-row input[type="range"]{width:100%}
+    .report{margin-top:auto;display:flex;flex-direction:column;gap:.5rem}
+    .status-good{color:var(--ok);font-weight:600} .status-warn{color:var(--warn);font-weight:600}
+
+    .statusbar{grid-area:status;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.5rem .75rem;display:flex;justify-content:space-between;align-items:center}
+
+    @media (max-width: 1100px){
+      .shell{grid-template-columns: 1fr;grid-template-areas:"toolbar""viewer""controls""left""right""status"}
+    }
+  </style>
+</head>
+<body>
+  <header class="appbar" role="banner">
+    <div class="appbar-inner">
+      <div class="brand" aria-label="Radiology AI Viewer">
+        <div class="brand-badge" aria-hidden="true">RA</div>
+        <div>Radiology <span class="muted">AI Viewer</span></div>
+      </div>
+
+      <form class="searchbox" role="search" aria-label="Buscar paciente">
+        <span aria-hidden="true">🔎</span>
+        <input id="searchInput" type="search" placeholder="Buscar paciente, # de estudio o RIS" aria-label="Buscar texto" />
+        <button class="btn btn-primary" type="submit" id="btnOpenStudy">Abrir estudio</button>
+      </form>
+
+      <div class="app-actions" role="group" aria-label="Acciones">
+        <button class="btn" id="btnTheme" type="button" aria-pressed="false" title="Alternar tema">
+          🌓 <span class="muted" id="lblTheme">Tema</span>
+        </button>
+        <button class="btn" type="button" title="Atajos" id="btnShortcuts">
+          ⌨️ <span class="muted" id="lblShortcuts">Atajos</span>
+        </button>
+        <button class="btn-ghost" type="button" title="Ayuda" id="btnHelp">❔ <span class="muted" id="lblHelp">Ayuda</span></button>
+        <button class="btn" id="btnLang" type="button" aria-pressed="false" title="Language">🌐 <span class="muted" id="lblLang">ES</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell" role="main">
+    <section class="toolbar" aria-label="Herramientas del visor">
+      <div class="toolgroup" role="group" aria-label="Navegación">
+        <button class="tool" title="Anterior"><span aria-hidden="true">⟵</span> <span class="label" id="lblPrev">Prev</span></button>
+        <button class="tool" title="Siguiente"><span class="label" id="lblNext">Next</span> <span aria-hidden="true">⟶</span></button>
+        <button class="tool" title="Comparar" aria-pressed="false">🪞 <span class="label" id="lblCompare">Comparar</span></button>
+      </div>
+      <div class="toolgroup" role="group" aria-label="Vista">
+        <button class="tool" aria-pressed="true">🔍 <span class="label" id="lblZoom">Zoom</span></button>
+        <button class="tool" aria-pressed="false">✋ <span class="label" id="lblPan">Pan</span></button>
+        <button class="tool" aria-pressed="false">☀️ <span class="label" id="lblWL">WL</span></button>
+        <button class="tool" aria-pressed="false">📏 <span class="label" id="lblMeasure">Medir</span></button>
+      </div>
+      <div class="toolgroup" role="group" aria-label="IA">
+        <button class="tool" id="toggleAI" aria-pressed="true">🤖 <span class="label" id="lblAI">Anotaciones IA</span></button>
+        <button class="tool" aria-pressed="false">🧠 <span class="label" id="lblSecondRead">2ª lectura</span></button>
+      </div>
+      <div class="toolgroup" role="group" aria-label="Exportar">
+        <button class="tool"><span>🖨️</span> <span class="label" id="lblPrint">Imprimir</span></button>
+        <button class="tool"><span>⬇️</span> <span class="label" id="lblExport">Exportar</span></button>
+      </div>
+    </section>
+
+    <!-- LEFT: estudios -->
+    <aside class="left" aria-label="Lista de estudios y filtros">
+      <div>
+        <h2 id="hdrStudies">Estudios</h2>
+        <p class="muted" id="hintStudies">Elija un estudio y luego use el scrubber para cambiar corte/frame.</p>
+      </div>
+      <div class="filter-row" role="group" aria-label="Filtros">
+        <button class="chip" aria-pressed="true" id="chipAll">Todos</button>
+        <button class="chip" aria-pressed="false">RX</button>
+        <button class="chip" aria-pressed="false">CT</button>
+        <button class="chip" aria-pressed="false">MRI</button>
+        <button class="chip" aria-pressed="false">US</button>
+      </div>
+      <div class="study-list" role="list" id="studyList"></div>
+    </aside>
+
+    <!-- VIEWER -->
+    <section class="viewer" aria-label="Visor DICOM">
+      <div class="viewport" role="region" aria-label="Área de imagen">
+        <div class="dicom mod-CT" id="dicom">
+          <div class="overlay" aria-hidden="true">
+            <div class="grid"></div>
+            <div class="hud" style="padding:.6rem;">
+              <div class="pill" id="hudPatient">Paciente: <strong>A. Gutiérrez</strong></div>
+              <div class="pill" id="hudStudy">Estudio: CT Tórax</div>
+              <div class="pill" id="hudWLWW">WL: 40 / WW: 400</div>
+            </div>
+            <div class="hud" style="padding:.6rem; align-items:flex-end;">
+              <div class="pill" id="hudSeries">Serie 1/1 · Corte 1/120</div>
+              <div class="pill" id="hudZoom">Zoom 125% · Pan activo</div>
+            </div>
+          </div>
+          <div class="ai-markers" id="aiMarkers"></div>
+          <div class="ai-badge" id="aiBadge">IA: 3 hallazgos (conf. ≥ 0.78)</div>
+          <div class="cursor-hint" id="cursorHint">Arrastra para Pan · Mantén <kbd>Alt</kbd> para medir</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTROLS: slice scrubber + filmstrip -->
+    <section class="controls" aria-label="Controles de navegación por cortes" id="controlsLabel">
+      <div class="scrub">
+        <button class="btn" id="prev">⟵</button>
+        <input type="range" id="slice" min="1" max="120" step="1" value="1" aria-label="Corte/frame" />
+        <div style="display:flex; gap:.4rem; align-items:center;">
+          <button class="btn" id="play">▶︎</button>
+          <button class="btn" id="next">⟶</button>
+          <output id="sliceOut">1/120</output>
+        </div>
+      </div>
+      <div class="filmstrip" id="filmstrip" aria-label="Miniaturas de cortes"></div>
+    </section>
+
+    <!-- RIGHT: IA y reporte -->
+    <aside class="right" aria-label="Asistente de IA y reporte">
+      <div>
+        <h2 id="hdrAIAssistant">Asistente IA</h2>
+        <p class="muted" id="hintAI">La IA resalta áreas de interés; usted confirma y firma.</p>
+      </div>
+
+      <div class="card" aria-live="polite">
+        <div class="switch">
+          <div>
+            <strong id="lblNodules">Nódulos / masas</strong>
+            <div class="muted" id="lblNodulesHint">Detección y contorno automático</div>
+          </div>
+          <label><span class="sr-only">Activar nódulos</span><input id="togNod" type="checkbox" checked /></label>
+        </div>
+
+        <div class="switch">
+          <div>
+            <strong id="lblOpacities">Opacidades</strong>
+            <div class="muted" id="lblOpacitiesHint">Vidrio esmerilado / consolidación</div>
+          </div>
+          <label><span class="sr-only">Activar opacidades</span><input id="togOpac" type="checkbox" checked /></label>
+        </div>
+
+        <div class="switch">
+          <div>
+            <strong id="lblMeasures">Mediciones automáticas</strong>
+            <div class="muted" id="lblMeasuresHint">Diámetro máx., volumen estimado</div>
+          </div>
+          <label><span class="sr-only">Activar mediciones</span><input id="togMeas" type="checkbox" checked /></label>
+        </div>
+
+        <div class="slider-row" style="margin-top:.5rem;">
+          <label for="conf" class="muted" id="lblConf"><strong>Umbral de confianza</strong></label>
+          <input id="conf" type="range" min="0.5" max="0.95" step="0.01" value="0.78" />
+          <output id="confOut">0.78</output>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 id="hdrFindings">Hallazgos</h2>
+        <ul class="muted" id="findingsList" style="padding-left:1rem; margin:.25rem 0;"></ul>
+      </div>
+
+      <div class="card report">
+        <div>
+          <h2 id="hdrReport">Informe</h2>
+          <p class="muted" id="lblDraftReady">Borrador listo para revisión.</p>
+        </div>
+        <div class="switch" title="Cumplimiento de checklist">
+          <div><strong id="lblChecklist">Checklist</strong> <span class="status-good" id="lblChecklistState">Completo</span></div>
+          <div aria-hidden="true">✅</div>
+        </div>
+        <div class="switch" title="Concordancia IA vs. lectura">
+          <div><strong id="lblConcordance">Concordancia</strong> <span class="status-warn" id="lblConcordanceState">2 pendientes</span></div>
+          <div aria-hidden="true">⚠️</div>
+        </div>
+        <button class="btn btn-primary" id="btnSign">Firmar y enviar</button>
+        <button class="btn" id="btnPreview">Previsualizar informe</button>
+        <p class="hint muted" id="lblSignatureNote">La firma registra usuario, hora y hash del estudio.</p>
+      </div>
+    </aside>
+
+    <section class="statusbar" role="contentinfo" aria-live="polite">
+      <div id="statusConn">Conectado a PACS • HL7 OK • <span class="muted">RIS #23-0912-AC</span></div>
+      <div class="muted" id="lblShortcutsBar">Atajos: <kbd>←/→</kbd> Slice · <kbd>Espacio</kbd> Play/Pause · <kbd>G</kbd> Anotaciones IA</div>
+    </section>
+  </main>
+
+  <script>
+    // --- i18n resources
+    const I18N = {
+      es: {
+        search_ph: "Buscar paciente, # de estudio o RIS",
+        open_study: "Abrir estudio",
+        theme: "Tema",
+        shortcuts: "Atajos",
+        help: "Ayuda",
+        lang: "ES",
+        prev: "Anterior",
+        next: "Siguiente",
+        compare: "Comparar",
+        zoom: "Zoom",
+        pan: "Pan",
+        wl: "WL",
+        measure: "Medir",
+        ai: "Anotaciones IA",
+        second_read: "2ª lectura",
+        print: "Imprimir",
+        export: "Exportar",
+        studies_hdr: "Estudios",
+        studies_hint: "Elija un estudio y luego use el scrubber para cambiar corte/frame.",
+        chip_all: "Todos",
+        hud_patient: "Paciente",
+        hud_study: "Estudio",
+        hud_series: (k, total) => `Serie 1/1 · Corte ${k}/${total}`,
+        hud_zoom: "Zoom 125% · Pan activo",
+        ai_badge: (n, thr) => `IA: ${n} hallazgos (conf. ≥ ${thr})`,
+        cursor_hint: "Arrastra para Pan · Mantén Alt para medir",
+        controls_aria: "Controles de navegación por cortes",
+        ai_hdr: "Asistente IA",
+        ai_hint: "La IA resalta áreas de interés; usted confirma y firma.",
+        nodules: "Nódulos / masas",
+        nodules_hint: "Detección y contorno automático",
+        opacities: "Opacidades",
+        opacities_hint: "Vidrio esmerilado / consolidación",
+        measures: "Mediciones automáticas",
+        measures_hint: "Diámetro máx., volumen estimado",
+        conf_label: "Umbral de confianza",
+        findings_hdr: "Hallazgos",
+        no_findings_slice: "Sin hallazgos por encima del umbral en este corte.",
+        report_hdr: "Informe",
+        draft_ready: "Borrador listo para revisión.",
+        checklist: "Checklist",
+        checklist_state: "Completo",
+        concordance: "Concordancia",
+        concordance_state: "2 pendientes",
+        sign_send: "Firmar y enviar",
+        preview_report: "Previsualizar informe",
+        signature_note: "La firma registra usuario, hora y hash del estudio.",
+        status_connected: (ris) => `Conectado a PACS • HL7 OK • <span class="muted">${ris}</span>`,
+        shortcuts_bar: 'Atajos: <kbd>←/→</kbd> Slice · <kbd>Espacio</kbd> Play/Pause · <kbd>G</kbd> Anotaciones IA'
+      },
+      en: {
+        search_ph: "Search patient, study # or RIS",
+        open_study: "Open study",
+        theme: "Theme",
+        shortcuts: "Shortcuts",
+        help: "Help",
+        lang: "EN",
+        prev: "Prev",
+        next: "Next",
+        compare: "Compare",
+        zoom: "Zoom",
+        pan: "Pan",
+        wl: "WL",
+        measure: "Measure",
+        ai: "AI Annotations",
+        second_read: "2nd read",
+        print: "Print",
+        export: "Export",
+        studies_hdr: "Studies",
+        studies_hint: "Choose a study, then use the scrubber to change slice/frame.",
+        chip_all: "All",
+        hud_patient: "Patient",
+        hud_study: "Study",
+        hud_series: (k, total) => `Series 1/1 · Slice ${k}/${total}`,
+        hud_zoom: "Zoom 125% · Pan active",
+        ai_badge: (n, thr) => `AI: ${n} findings (conf. ≥ ${thr})`,
+        cursor_hint: "Drag to pan · Hold Alt to measure",
+        controls_aria: "Slice navigation controls",
+        ai_hdr: "AI Assistant",
+        ai_hint: "AI highlights areas of interest; you confirm and sign.",
+        nodules: "Nodules / masses",
+        nodules_hint: "Auto detection & contour",
+        opacities: "Opacities",
+        opacities_hint: "Ground-glass / consolidation",
+        measures: "Automatic measurements",
+        measures_hint: "Max diameter, est. volume",
+        conf_label: "Confidence threshold",
+        findings_hdr: "Findings",
+        no_findings_slice: "No findings above threshold on this slice.",
+        report_hdr: "Report",
+        draft_ready: "Draft ready for review.",
+        checklist: "Checklist",
+        checklist_state: "Complete",
+        concordance: "Concordance",
+        concordance_state: "2 pending",
+        sign_send: "Sign & submit",
+        preview_report: "Preview report",
+        signature_note: "Signature logs user, time, and study hash.",
+        status_connected: (ris) => `Connected to PACS • HL7 OK • <span class="muted">${ris}</span>`,
+        shortcuts_bar: 'Shortcuts: <kbd>←/→</kbd> Slice · <kbd>Space</kbd> Play/Pause · <kbd>G</kbd> AI Annotations'
+      }
+    };
+
+    // --- Datos de estudios (localizados)
+    function makeFind(x, y, text_es, text_en, conf, start, end){
+      return {x, y, text_es, text_en, conf, start, end};
+    }
+    const STUDIES = {
+      ct01: {
+        id:'ct01', modality:'CT', cssClass:'mod-CT',
+        patient:'A. Gutiérrez',
+        study_es:'CT Tórax c/ contraste',
+        study_en:'CT Chest w/ contrast',
+        wlww:'WL: 40 / WW: 400', total:120, zoom_es:'Zoom 125% · Pan activo', zoom_en:'Zoom 125% · Pan active',
+        ris:'RIS #23-0912-AC',
+        tag_es:'Urgente', tag_en:'Urgent',
+        findings:[
+          makeFind(68,42,'Nódulo 7.8 mm (segmento posterior lóbulo sup. der.)','7.8 mm nodule (posterior segment RUL)',0.88, 38, 54),
+          makeFind(34,76,'Opacidad en vidrio esmerilado (lóbulo inf. izq.)','Ground-glass opacity (left lower lobe)',0.80, 70, 92),
+          makeFind(55,58,'Adenopatía hiliar leve','Mild hilar lymphadenopathy',0.76, 18, 28)
+        ]
+      },
+      rx01: {
+        id:'rx01', modality:'RX', cssClass:'mod-RX',
+        patient:'J. Díaz',
+        study_es:'RX Rodilla izquierda — 2 vistas',
+        study_en:'Left knee X-ray — 2 views',
+        wlww:'WL: 250 / WW: 1500', total:2, zoom_es:'Zoom 110% · Pan activo', zoom_en:'Zoom 110% · Pan active',
+        ris:'RIS #23-0901-KL',
+        tag_es:'Rutina', tag_en:'Routine',
+        findings:[
+          makeFind(52,64,'Derrame articular leve','Mild joint effusion',0.74, 1, 1),
+          makeFind(40,40,'Osteofitos marginales','Marginal osteophytes',0.82, 2, 2)
+        ]
+      },
+      mri01: {
+        id:'mri01', modality:'MRI', cssClass:'mod-MRI',
+        patient:'C. Restrepo',
+        study_es:'MRI Cerebro — FLAIR',
+        study_en:'Brain MRI — FLAIR',
+        wlww:'WL: 1000 / WW: 2500', total:96, zoom_es:'Zoom 140% · Pan activo', zoom_en:'Zoom 140% · Pan active',
+        ris:'RIS #23-0829-MR',
+        tag_es:'Prioridad', tag_en:'Priority',
+        findings:[
+          makeFind(60,48,'Hiperintensidad subcortical','Subcortical hyperintensity',0.81, 44, 58),
+          makeFind(46,35,'Lesión periventricular','Periventricular lesion',0.86, 50, 68),
+          makeFind(38,62,'Artefacto de movimiento','Motion artifact',0.60, 1, 96)
+        ]
+      }
+    };
+
+    // --- Theme setup
+    const btnTheme = document.getElementById('btnTheme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const THEME_KEY = 'raiv:theme';
+    function setTheme(mode){ document.documentElement.dataset.theme = mode; btnTheme.setAttribute('aria-pressed', mode === 'dark'); }
+    function initTheme(){ const saved = localStorage.getItem(THEME_KEY); const mode = saved || (prefersDark ? 'dark' : 'light'); setTheme(mode); }
+    btnTheme?.addEventListener('click', ()=>{ const c = document.documentElement.dataset.theme || 'light'; const n = c === 'light' ? 'dark' : 'light'; setTheme(n); localStorage.setItem(THEME_KEY, n); });
+    initTheme();
+    const darkStyles = document.createElement('style');
+    darkStyles.innerHTML = `:root, :root[data-theme="light"]{} :root[data-theme="dark"]{--bg:#0b1220;--panel:#0e172a;--ink:#e5e7eb;--ink-2:#94a3b8;--line:#1f2a44;--primary-10:#0b2e2f;} :root[data-theme="dark"] .dicom{border-color:#0b3a45;} :root[data-theme="dark"] .viewer{border-color:#0b3a45;}`;
+    document.head.appendChild(darkStyles);
+
+    // --- Language setup
+    const LANG_KEY = 'raiv:lang';
+    const btnLang = document.getElementById('btnLang');
+    const lblLang = document.getElementById('lblLang');
+    let lang = localStorage.getItem(LANG_KEY) || 'es';
+
+    function setLang(next){
+      lang = next;
+      localStorage.setItem(LANG_KEY, lang);
+      document.documentElement.lang = (lang === 'es' ? 'es-CO' : 'en');
+      lblLang.textContent = I18N[lang].lang;
+      applyI18n();
+      rebuildStudies();
+      loadStudy(currentStudyId); // refresh HUD and lists
+      setSlice(Number(slice.value)); // re-render slice caption & findings
+    }
+
+    btnLang.addEventListener('click', ()=> setLang(lang === 'es' ? 'en' : 'es'));
+
+    // --- i18n apply
+    function txt(id, val){ const el = document.getElementById(id); if(el) el.textContent = val; }
+    function html(id, val){ const el = document.getElementById(id); if(el) el.innerHTML = val; }
+    function ph(id, val){ const el = document.getElementById(id); if(el) el.placeholder = val; }
+
+    function applyI18n(){
+      const t = I18N[lang];
+      ph('searchInput', t.search_ph);
+      txt('btnOpenStudy', t.open_study);
+      txt('lblTheme', t.theme);
+      txt('lblShortcuts', t.shortcuts);
+      txt('lblHelp', t.help);
+
+      txt('lblPrev', t.prev);
+      txt('lblNext', t.next);
+      txt('lblCompare', t.compare);
+      txt('lblZoom', t.zoom);
+      txt('lblPan', t.pan);
+      txt('lblWL', t.wl);
+      txt('lblMeasure', t.measure);
+      txt('lblAI', t.ai);
+      txt('lblSecondRead', t.second_read);
+      txt('lblPrint', t.print);
+      txt('lblExport', t.export);
+
+      txt('hdrStudies', t.studies_hdr);
+      txt('hintStudies', t.studies_hint);
+      txt('chipAll', t.chip_all);
+
+      txt('hdrAIAssistant', t.ai_hdr);
+      txt('hintAI', t.ai_hint);
+      txt('lblNodules', t.nodules);
+      txt('lblNodulesHint', t.nodules_hint);
+      txt('lblOpacities', t.opacities);
+      txt('lblOpacitiesHint', t.opacities_hint);
+      txt('lblMeasures', t.measures);
+      txt('lblMeasuresHint', t.measures_hint);
+      txt('lblConf', t.conf_label);
+      txt('hdrFindings', t.findings_hdr);
+      txt('hdrReport', t.report_hdr);
+      txt('lblDraftReady', t.draft_ready);
+      txt('lblChecklist', t.checklist);
+      txt('lblChecklistState', t.checklist_state);
+      txt('lblConcordance', t.concordance);
+      txt('lblConcordanceState', t.concordance_state);
+      txt('btnSign', t.sign_send);
+      txt('btnPreview', t.preview_report);
+      txt('lblSignatureNote', t.signature_note);
+
+      // dynamic HUD & status re-rendered elsewhere
+      html('lblShortcutsBar', t.shortcuts_bar);
+      // aria labels
+      document.getElementById('controlsLabel')?.setAttribute('aria-label', t.controls_aria);
+    }
+
+    // --- Build study list (localized)
+    const studyList = document.getElementById('studyList');
+    let currentStudyId = 'ct01';
+
+    function studyTitle(s){
+      return lang === 'es' ? s.study_es : s.study_en;
+    }
+    function studyZoom(s){
+      return lang === 'es' ? s.zoom_es : s.zoom_en;
+    }
+    function studyTag(s){
+      return lang === 'es' ? s.tag_es : s.tag_en;
+    }
+
+    function rebuildStudies(){
+      studyList.innerHTML = '';
+      ['ct01','rx01','mri01'].forEach((id, idx)=>{
+        const s = STUDIES[id];
+        const div = document.createElement('div');
+        div.className = 'study' + (id === currentStudyId ? ' active' : '');
+        div.setAttribute('role', 'listitem');
+        div.setAttribute('tabindex', '0');
+        div.setAttribute('data-id', id);
+        div.innerHTML = `
+          <div class="thumb">${s.modality}</div>
+          <div class="meta">
+            <div><strong>${studyTitle(s)}</strong> <span class="tag">${studyTag(s)}</span></div>
+            <div class="muted">ID: ${s.ris.replace('RIS ', '')} | ${id==='ct01'?'12:14':(id==='rx01'?'09:05':'15:22')}</div>
+            <div class="muted">${I18N[lang].hud_patient}: ${s.patient} ${id==='ct01'?'• <span class="tag-dot" aria-hidden="true"></span> IA':''}</div>
+          </div>
+        `;
+        div.addEventListener('click', ()=>{
+          document.querySelectorAll('.study').forEach(s=>s.classList.remove('active'));
+          div.classList.add('active');
+          loadStudy(id);
+          stopPlay();
+        });
+        studyList.appendChild(div);
+      });
+    }
+
+    // --- Viewer elements
+    const dicom = document.getElementById('dicom');
+    const markers = document.getElementById('aiMarkers');
+    const aiBadge = document.getElementById('aiBadge');
+    const hudPatient = document.getElementById('hudPatient');
+    const hudStudy = document.getElementById('hudStudy');
+    const hudWLWW = document.getElementById('hudWLWW');
+    const hudSeries = document.getElementById('hudSeries');
+    const hudZoom = document.getElementById('hudZoom');
+    const findingsList = document.getElementById('findingsList');
+    const statusConn = document.getElementById('statusConn');
+    const cursorHint = document.getElementById('cursorHint');
+
+    const slice = document.getElementById('slice');
+    const sliceOut = document.getElementById('sliceOut');
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const playBtn = document.getElementById('play');
+    const conf = document.getElementById('conf');
+    const confOut = document.getElementById('confOut');
+    const toggleAI = document.getElementById('toggleAI');
+
+    // --- AI visibility
+    let aiVisible = true;
+    toggleAI?.addEventListener('click', ()=>{
+      const pressed = toggleAI.getAttribute('aria-pressed') === 'true';
+      toggleAI.setAttribute('aria-pressed', String(!pressed));
+      aiVisible = !pressed;
+      markers.style.display = aiVisible ? 'block' : 'none';
+      aiBadge.style.display = aiVisible ? 'inline-flex' : 'none';
+    });
+
+    // --- Build filmstrip
+    const filmstrip = document.getElementById('filmstrip');
+    function buildFilmstrip(total){
+      filmstrip.innerHTML = '';
+      const count = Math.min(12, total);
+      const step = Math.max(1, Math.floor(total / count));
+      for(let i=1;i<=total;i+=step){
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.setAttribute('data-i', i);
+        tile.title = `${I18N[lang].hud_series(i, total)}`;
+        tile.style.background = `radial-gradient(120px 60px at ${20 + (i%5)*15}% ${30 + (i%7)*6}%, #cfe9ea, #eaf6f7)`;
+        tile.addEventListener('click', ()=> setSlice(i));
+        filmstrip.appendChild(tile);
+      }
+      highlightTile(1);
+    }
+    function highlightTile(i){
+      document.querySelectorAll('.tile').forEach(t => t.classList.remove('active'));
+      const t = Array.from(document.querySelectorAll('.tile')).find(el => Number(el.dataset.i) === i);
+      if(t) t.classList.add('active');
+    }
+
+    // --- Findings render helpers
+    function renderMarkersForSlice(study, k){
+      markers.innerHTML = '';
+      const thr = parseFloat(conf.value);
+      study.findings.forEach((f)=>{
+        if(k >= f.start && k <= f.end){
+          const m = document.createElement('div');
+          const weak = f.conf < thr ? ' low' : '';
+          m.className = 'marker' + weak;
+          const jitterX = ((k - f.start) % 5) - 2;
+          const jitterY = ((k - f.start) % 3) - 1;
+          m.style.left = (f.x + jitterX*0.6) + '%';
+          m.style.top  = (f.y + jitterY*0.6) + '%';
+          const dot = document.createElement('div'); dot.className = 'dot';
+          const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = `${lang==='es'?f.text_es:f.text_en} (${f.conf.toFixed(2)})`;
+          m.appendChild(dot); m.appendChild(lbl);
+          markers.appendChild(m);
+        }
+      });
+      markers.style.display = aiVisible ? 'block' : 'none';
+    }
+    function renderFindings(study, k){
+      findingsList.innerHTML = '';
+      const thr = parseFloat(conf.value);
+      const visible = study.findings.filter(f => k >= f.start && k <= f.end && f.conf >= thr);
+      if(!visible.length){
+        const li = document.createElement('li'); li.textContent = I18N[lang].no_findings_slice; findingsList.appendChild(li);
+      }else{
+        visible.forEach(f=>{
+          const li = document.createElement('li'); li.textContent = `${lang==='es'?f.text_es:f.text_en} (conf. ${f.conf.toFixed(2)})`; findingsList.appendChild(li);
+        });
+      }
+    }
+
+    // --- State + load/render
+    let current = STUDIES.ct01;
+    function loadStudy(id){
+      current = STUDIES[id];
+      currentStudyId = id;
+      dicom.classList.remove('mod-CT','mod-RX','mod-MRI');
+      dicom.classList.add(current.cssClass);
+
+      // HUD
+      hudPatient.innerHTML = `${I18N[lang].hud_patient}: <strong>${current.patient}</strong>`;
+      hudStudy.textContent  = `${I18N[lang].hud_study}: ${lang==='es'?current.study_es:current.study_en}`;
+      hudWLWW.textContent  = current.wlww;
+      hudZoom.textContent  = (lang==='es'?current.zoom_es:current.zoom_en);
+      html('statusConn', I18N[lang].status_connected(current.ris));
+
+      // Slider + filmstrip
+      slice.min = 1; slice.max = current.total; slice.value = 1;
+      sliceOut.textContent = `1/${current.total}`;
+      buildFilmstrip(current.total);
+
+      // AI badge
+      aiBadge.textContent = I18N[lang].ai_badge(current.findings.length, parseFloat(conf.value).toFixed(2));
+
+      // First slice render
+      setSlice(1);
+    }
+
+    function setSlice(k){
+      k = Math.max(1, Math.min(current.total, Math.round(k)));
+      slice.value = k;
+      sliceOut.textContent = `${k}/${current.total}`;
+      hudSeries.textContent = I18N[lang].hud_series(k, current.total);
+      aiBadge.textContent = I18N[lang].ai_badge(current.findings.length, parseFloat(conf.value).toFixed(2));
+      const cx = 50 + (k % 10) * 3;
+      const cy = 30 + (k % 8) * 4;
+      dicom.style.background = `radial-gradient(1200px 600px at ${cx}% ${cy}%, rgba(21,184,186,.18), rgba(11,126,127,.08) 55%, rgba(9,26,32,1) 100%)`;
+      dicom.classList.remove('mod-CT','mod-RX','mod-MRI'); dicom.classList.add(current.cssClass);
+      renderMarkersForSlice(current, k);
+      renderFindings(current, k);
+      highlightTile(k);
+    }
+
+    // --- Slice controls
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const playBtnEl = document.getElementById('play');
+    let playing = false;
+    let timer = null;
+
+    function startPlay(){
+      playing = true; playBtnEl.textContent = '❚❚';
+      timer = setInterval(()=>{
+        const k = Number(slice.value) + 1;
+        if(k > current.total) setSlice(1); else setSlice(k);
+      }, 200);
+    }
+    function stopPlay(){
+      playing = false; playBtnEl.textContent = '▶︎';
+      if(timer){ clearInterval(timer); timer = null; }
+    }
+
+    slice.addEventListener('input', (e)=> setSlice(Number(e.target.value)));
+    prevBtn.addEventListener('click', ()=> setSlice(Number(slice.value) - 1));
+    nextBtn.addEventListener('click', ()=> setSlice(Number(slice.value) + 1));
+    playBtnEl.addEventListener('click', ()=> playing ? stopPlay() : startPlay());
+
+    // --- Confidence slider
+    conf.addEventListener('input', (e)=>{
+      confOut.textContent = Number(e.target.value).toFixed(2);
+      setSlice(Number(slice.value));
+    });
+
+    // --- Keyboard shortcuts
+    document.addEventListener('keydown', (e)=>{
+      if(e.key.toLowerCase() === 'g'){ toggleAI?.click(); }
+      else if(e.key === 'ArrowLeft'){ e.preventDefault(); setSlice(Number(slice.value) - (e.shiftKey ? 5 : 1)); }
+      else if(e.key === 'ArrowRight'){ e.preventDefault(); setSlice(Number(slice.value) + (e.shiftKey ? 5 : 1)); }
+      else if(e.code === 'Space'){ e.preventDefault(); playing ? stopPlay() : startPlay(); }
+    });
+
+    // --- Misc UI
+    document.getElementById('btnPreview')?.addEventListener('click', ()=>{
+      alert((lang==='es'?'Previsualización del informe.':'Report preview.') + '\\n(Prototype: PDF/HTML with findings.)');
+    });
+    document.getElementById('btnSign')?.addEventListener('click', ()=>{
+      const now = new Date().toISOString().slice(0,16).replace('T',' ');
+      alert((lang==='es'?'Firmado digitalmente por Dr(a). Apellido, ':'Digitally signed by Dr. Lastname, ') + now + '.\\n(Prototype: HSM/PKI + RIS/PACS send.)');
+    });
+
+    // --- Initialize
+    applyI18n();
+    rebuildStudies();
+    loadStudy(currentStudyId);
+    // Hide hint after a moment
+    setTimeout(()=>{ if(cursorHint) cursorHint.style.display='none'; }, 3500);
+  </script>
+</body>
