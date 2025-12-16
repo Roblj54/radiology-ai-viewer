@@ -1,20 +1,22 @@
 ﻿import { RenderingEngine, Enums as CoreEnums, init as csInit } from '@cornerstonejs/core';
-import {
-  init as csToolsInit,
+import * as csTools from '@cornerstonejs/tools';
+
+import * as dicomImageLoader from '@cornerstonejs/dicom-image-loader';
+import dicomParser from 'dicom-parser';
+
+const {
+  init: csToolsInit,
   addTool,
   ToolGroupManager,
   PanTool,
   ZoomTool,
   WindowLevelTool,
   StackScrollTool,
-  LengthTool
-} from '@cornerstonejs/tools';
+  LengthTool,
+  Enums: csToolsEnums
+} = csTools;
 
-import MouseBindings from '@cornerstonejs/tools/enums/MouseBindings';
-import KeyboardBindings from '@cornerstonejs/tools/enums/KeyboardBindings';
-
-import * as dicomImageLoader from '@cornerstonejs/dicom-image-loader';
-import dicomParser from 'dicom-parser';
+const { MouseBindings, KeyboardBindings } = csToolsEnums;
 
 const element = document.getElementById('dicomViewport');
 const statusEl = document.getElementById('status');
@@ -61,27 +63,22 @@ async function boot() {
 
   toolGroup.addViewport(viewportId, renderingEngineId);
 
-  // Left drag: window level
   toolGroup.setToolActive(WindowLevelTool.toolName, {
     bindings: [{ mouseButton: MouseBindings.Primary }]
   });
 
-  // Middle drag: pan
   toolGroup.setToolActive(PanTool.toolName, {
     bindings: [{ mouseButton: MouseBindings.Auxiliary }]
   });
 
-  // Right drag: zoom
   toolGroup.setToolActive(ZoomTool.toolName, {
     bindings: [{ mouseButton: MouseBindings.Secondary }]
   });
 
-  // Mouse wheel: stack scroll
   toolGroup.setToolActive(StackScrollTool.toolName, {
     bindings: [{ mouseButton: MouseBindings.Wheel }]
   });
 
-  // Shift + left: length measurement
   toolGroup.setToolActive(LengthTool.toolName, {
     bindings: [{ mouseButton: MouseBindings.Primary, modifierKey: KeyboardBindings.Shift }]
   });
