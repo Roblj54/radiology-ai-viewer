@@ -250,6 +250,7 @@
     setText("cornerMode", t.cornerMode);
     setText("hint", t.hint);
     setText("centerText", t.centerText);
+
     syncSlice();
   }
 
@@ -270,7 +271,9 @@
     syncSlice();
   });
 
-  function toggleChip(id){ document.getElementById(id).classList.toggle("active"); }
+  function toggleChip(id){
+    document.getElementById(id).classList.toggle("active");
+  }
   document.getElementById("chipAI").addEventListener("click", ()=>toggleChip("chipAI"));
   document.getElementById("chipGrid").addEventListener("click", ()=>toggleChip("chipGrid"));
   document.getElementById("chipMeasure").addEventListener("click", ()=>toggleChip("chipMeasure"));
@@ -294,6 +297,7 @@
   });
 
   applyLang("en");
+  syncSlice();
 </script>
 </body>
 </html>
