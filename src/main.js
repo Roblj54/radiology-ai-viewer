@@ -6,7 +6,7 @@ import {
   PanTool,
   ZoomTool,
   WindowLevelTool,
-  StackScrollMouseWheelTool,
+  StackScrollTool,
   LengthTool
 } from '@cornerstonejs/tools';
 
@@ -32,7 +32,7 @@ async function boot() {
   addTool(PanTool);
   addTool(ZoomTool);
   addTool(WindowLevelTool);
-  addTool(StackScrollMouseWheelTool);
+  addTool(StackScrollTool);
   addTool(LengthTool);
 
   const renderingEngineId = 're1';
@@ -50,7 +50,7 @@ async function boot() {
   const toolGroupId = 'tg1';
   const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
-  toolGroup.addTool(StackScrollMouseWheelTool.toolName);
+  toolGroup.addTool(StackScrollTool.toolName);
   toolGroup.addTool(WindowLevelTool.toolName);
   toolGroup.addTool(PanTool.toolName);
   toolGroup.addTool(ZoomTool.toolName);
@@ -67,7 +67,11 @@ async function boot() {
   toolGroup.setToolActive(ZoomTool.toolName, {
     bindings: [{ mouseButton: Enums.MouseBindings.Secondary }]
   });
-  toolGroup.setToolActive(StackScrollMouseWheelTool.toolName);
+
+  # Mouse wheel slice scrolling
+  toolGroup.setToolActive(StackScrollTool.toolName, {
+    bindings: [{ mouseButton: Enums.MouseBindings.Wheel }]
+  });
 
   toolGroup.setToolActive(LengthTool.toolName, {
     bindings: [{ mouseButton: Enums.MouseBindings.Primary, modifierKey: Enums.KeyboardBindings.Shift }]
