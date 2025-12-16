@@ -68,10 +68,8 @@ async function boot() {
     bindings: [{ mouseButton: Enums.MouseBindings.Secondary }]
   });
 
-  # Mouse wheel slice scrolling
-  toolGroup.setToolActive(StackScrollTool.toolName, {
-    bindings: [{ mouseButton: Enums.MouseBindings.Wheel }]
-  });
+  // Mouse wheel slice scrolling (use tool defaults)
+  toolGroup.setToolActive(StackScrollTool.toolName);
 
   toolGroup.setToolActive(LengthTool.toolName, {
     bindings: [{ mouseButton: Enums.MouseBindings.Primary, modifierKey: Enums.KeyboardBindings.Shift }]

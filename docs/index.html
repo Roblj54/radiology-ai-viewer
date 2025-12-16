@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radiology AI Viewer (Cornerstone)</title>
+    <style>
+      body { margin: 0; font-family: system-ui, Segoe UI, Arial; background: #0b1220; color: #e5e7eb; }
+      header { padding: 12px 16px; background: #0f172a; border-bottom: 1px solid #1f2937; }
+      .wrap { display: grid; grid-template-columns: 320px 1fr; gap: 12px; padding: 12px; }
+      .panel { background: #0f172a; border: 1px solid #1f2937; border-radius: 10px; padding: 12px; }
+      .viewport { height: calc(100vh - 84px); background: #0b1220; border: 1px dashed #334155; border-radius: 10px; overflow: hidden; position: relative; }
+      .hint { font-size: 12px; color: #9ca3af; line-height: 1.4; }
+      #status { margin-top: 10px; font-size: 12px; color: #a7f3d0; }
+      input[type="file"] { width: 100%; }
+      .kbd { padding: 2px 6px; border: 1px solid #334155; border-radius: 6px; background: #0b1220; font-size: 12px; }
+    </style>
+    <script type="module" crossorigin src="/radiology-ai-viewer/assets/index-CKGGtlOC.js"></script>
+  </head>
+  <body>
+    <header>
+      <strong>Radiology AI Viewer</strong> <span class="hint">Cornerstone3D stack viewer</span>
+    </header>
+
+    <div class="wrap">
+      <div class="panel">
+        <div><strong>Load DICOM series</strong></div>
+        <div class="hint" style="margin-top: 6px;">
+          Use file picker (multiple files) or drag and drop into the viewport.
+        </div>
+        <div style="margin-top: 10px;">
+          <input id="dicomFiles" type="file" multiple />
+        </div>
+        <div id="status">Booting...</div>
+
+        <hr style="border-color:#1f2937; margin: 12px 0;" />
+
+        <div class="hint">
+          Controls:<br />
+          Mouse wheel = scroll slices<br />
+          Left drag = window/level<br />
+          Middle drag = pan<br />
+          Right drag = zoom<br />
+          <span class="kbd">Shift</span> + left = length tool
+        </div>
+      </div>
+
+      <div id="dicomViewport" class="viewport" title="Drop files here"></div>
+    </div>
+
+  </body>
+</html>
