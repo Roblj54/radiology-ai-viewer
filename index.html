@@ -1,303 +1,53 @@
 ﻿<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Radiology AI Viewer</title>
-  <style>
-    :root{
-      --bg:#f4f7f9; --panel:#ffffff; --ink:#0f172a; --muted:#475569;
-      --line:#e5e7eb; --primary:#0ea5a6; --soft:#e6f7f7;
-    }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--ink); }
-    header{
-      background:#0f172a; color:#fff; padding:12px 16px;
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    header .title{ font-weight:700; }
-    header .right{ display:flex; gap:8px; align-items:center; font-size:12px; opacity:.95; }
-    .langBtn{
-      border:1px solid rgba(255,255,255,.35); background:transparent; color:#fff;
-      padding:6px 10px; border-radius:999px; cursor:pointer;
-    }
-    .langBtn.active{ background:rgba(255,255,255,.16); }
-    main{ display:grid; grid-template-columns:340px 1fr; height:calc(100vh - 48px); }
-    aside{ background:var(--panel); border-right:1px solid var(--line); padding:14px; overflow:auto; }
-    .card{ border:1px solid var(--line); background:#fff; border-radius:12px; padding:12px; margin-bottom:12px; }
-    .card h3{ margin:0 0 10px 0; font-size:14px; }
-    .kv{ font-size:13px; margin:4px 0; color:var(--ink); }
-    .kv b{ font-weight:700; }
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      background:#e0f2fe; border:1px solid #bae6fd;
-      padding:6px 10px; border-radius:10px; font-size:13px; margin:4px 0;
-    }
-    .badge .score{ font-weight:700; color:#0c4a6e; }
-    textarea{
-      width:100%; min-height:90px; resize:vertical;
-      border:1px solid var(--line); border-radius:10px; padding:10px;
-      font-size:13px;
-    }
-    .viewerWrap{ padding:14px; }
-    .toolbar{
-      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
-      background:#fff; border:1px solid var(--line); border-radius:12px;
-      padding:10px;
-    }
-    .chip{
-      border:1px solid var(--line); background:#fff; border-radius:999px;
-      padding:8px 10px; cursor:pointer; font-size:13px;
-    }
-    .chip.active{ background:var(--soft); border-color:var(--primary); }
-    .spacer{ flex:1; }
-    .small{ font-size:12px; color:var(--muted); }
-    .row{ display:flex; gap:10px; align-items:center; }
-    input[type="range"]{ width:220px; }
-    select, input[type="file"]{
-      border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:#fff;
-      font-size:13px;
-    }
-    #viewport{
-      margin-top:12px;
-      width:100%;
-      height:calc(100vh - 48px - 14px - 14px - 62px);
-      background:#fff;
-      border:2px dashed #94a3b8;
-      border-radius:14px;
-      display:flex; align-items:center; justify-content:center;
-      position:relative;
-      overflow:hidden;
-    }
-    .corner{
-      position:absolute; left:12px; top:12px;
-      background:rgba(15,23,42,.9); color:#fff;
-      padding:8px 10px; border-radius:12px; font-size:12px;
-    }
-    .corner .muted{ opacity:.8; }
-    .hint{
-      position:absolute; right:12px; top:12px;
-      background:#fff; border:1px solid var(--line);
-      padding:8px 10px; border-radius:12px; font-size:12px; color:var(--muted);
-    }
-    footer{
-      position:fixed; left:0; right:0; bottom:0;
-      background:transparent; color:var(--muted);
-      padding:8px 12px; font-size:12px;
-      pointer-events:none;
-    }
-  </style>
-</head>
-<body>
-<header>
-  <div class="title" id="title">Radiology AI Viewer</div>
-  <div class="right">
-    <button class="langBtn active" id="btnEN" type="button">EN</button>
-    <button class="langBtn" id="btnES" type="button">ES</button>
-  </div>
-</header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radiology AI Viewer (Cornerstone)</title>
+    <style>
+      body { margin: 0; font-family: system-ui, Segoe UI, Arial; background: #0b1220; color: #e5e7eb; }
+      header { padding: 12px 16px; background: #0f172a; border-bottom: 1px solid #1f2937; }
+      .wrap { display: grid; grid-template-columns: 320px 1fr; gap: 12px; padding: 12px; }
+      .panel { background: #0f172a; border: 1px solid #1f2937; border-radius: 10px; padding: 12px; }
+      .viewport { height: calc(100vh - 84px); background: #0b1220; border: 1px dashed #334155; border-radius: 10px; overflow: hidden; position: relative; }
+      .hint { font-size: 12px; color: #9ca3af; line-height: 1.4; }
+      #status { margin-top: 10px; font-size: 12px; color: #a7f3d0; }
+      input[type="file"] { width: 100%; }
+      .kbd { padding: 2px 6px; border: 1px solid #334155; border-radius: 6px; background: #0b1220; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Radiology AI Viewer</strong> <span class="hint">Cornerstone3D stack viewer</span>
+    </header>
 
-<main>
-  <aside>
-    <div class="card">
-      <h3 id="studyInfoTitle">Study information</h3>
-      <div class="kv"><span id="lblPatient">Patient ID</span>: <b id="patient">DEMO-001</b></div>
-      <div class="kv"><span id="lblModality">Modality</span>: <b id="modality">MR</b></div>
-      <div class="kv"><span id="lblSide">Side</span>: <b id="side">Right</b></div>
-      <div class="kv"><span id="lblDate">Date</span>: <b id="date">2012-05-14</b></div>
-    </div>
+    <div class="wrap">
+      <div class="panel">
+        <div><strong>Load DICOM series</strong></div>
+        <div class="hint" style="margin-top: 6px;">
+          Use file picker (multiple files) or drag and drop into the viewport.
+          GitHub Pages cannot read your disk without a file selection.
+        </div>
+        <div style="margin-top: 10px;">
+          <input id="dicomFiles" type="file" multiple />
+        </div>
+        <div id="status">Booting...</div>
 
-    <div class="card">
-      <h3 id="aiTitle">AI findings</h3>
-      <div class="badge"><span id="ai1">Focal non-mass enhancement</span> <span class="score">0.87</span></div><br/>
-      <div class="badge"><span id="ai2">Suspicious kinetic curve</span> <span class="score">0.81</span></div><br/>
-      <div class="badge"><span id="ai3">Background enhancement</span> <span class="score">0.42</span></div>
-      <div class="small" id="aiNote" style="margin-top:10px;">Demo values only. Replace with real model output when connected.</div>
-    </div>
+        <hr style="border-color:#1f2937; margin: 12px 0;" />
 
-    <div class="card">
-      <h3 id="notesTitle">Notes</h3>
-      <textarea id="notesBox" placeholder="Local notes only, not uploaded."></textarea>
-    </div>
-  </aside>
-
-  <div class="viewerWrap">
-    <div class="toolbar">
-      <div class="row">
-        <span class="small" id="lblSeries">Series</span>
-        <select id="series">
-          <option value="s1">Series 1 (64 slices)</option>
-          <option value="s2">Series 2 (48 slices)</option>
-          <option value="s3">Series 3 (32 slices)</option>
-        </select>
+        <div class="hint">
+          Controls:<br />
+          Mouse wheel = scroll slices<br />
+          Left drag = window/level<br />
+          Middle drag = pan<br />
+          Right drag = zoom<br />
+          <span class="kbd">Shift</span> + left = length tool
+        </div>
       </div>
 
-      <div class="row">
-        <span class="small" id="lblSlice">Slice</span>
-        <input id="slice" type="range" min="1" max="64" value="12" />
-        <span class="small" id="sliceText">12 / 64</span>
-      </div>
-
-      <div class="spacer"></div>
-
-      <button class="chip active" id="chipAI" type="button">AI overlay</button>
-      <button class="chip" id="chipGrid" type="button">Grid</button>
-      <button class="chip" id="chipMeasure" type="button">Measurements</button>
-
-      <input id="fileInput" type="file" multiple />
+      <div id="dicomViewport" class="viewport" title="Drop files here"></div>
     </div>
 
-    <div id="viewport">
-      <div class="corner">
-        <div><b id="cornerSeries">S1</b> <span class="muted">|</span> <span id="cornerSlice">Slice 12</span></div>
-        <div class="muted" id="cornerMode">Viewport placeholder (no DICOM parser yet)</div>
-      </div>
-      <div class="hint" id="hint">Drop files here (demo UI)</div>
-      <div id="centerText">DICOM viewport (placeholder)</div>
-    </div>
-  </div>
-</main>
-
-<footer>
-  Frontend-only prototype. No real patient data is stored or transmitted.
-</footer>
-
-<script>
-  const state = { lang: "en", total: 64, slice: 12 };
-
-  const i18n = {
-    en: {
-      title: "Radiology AI Viewer",
-      studyInfoTitle: "Study information",
-      lblPatient: "Patient ID",
-      lblModality: "Modality",
-      lblSide: "Side",
-      lblDate: "Date",
-      aiTitle: "AI findings",
-      ai1: "Focal non-mass enhancement",
-      ai2: "Suspicious kinetic curve",
-      ai3: "Background enhancement",
-      aiNote: "Demo values only. Replace with real model output when connected.",
-      notesTitle: "Notes",
-      notesPH: "Local notes only, not uploaded.",
-      lblSeries: "Series",
-      lblSlice: "Slice",
-      chipAI: "AI overlay",
-      chipGrid: "Grid",
-      chipMeasure: "Measurements",
-      cornerMode: "Viewport placeholder (no DICOM parser yet)",
-      hint: "Drop files here (demo UI)",
-      centerText: "DICOM viewport (placeholder)"
-    },
-    es: {
-      title: "Visor Radiologia IA",
-      studyInfoTitle: "Informacion del estudio",
-      lblPatient: "ID de paciente",
-      lblModality: "Modalidad",
-      lblSide: "Lado",
-      lblDate: "Fecha",
-      aiTitle: "Hallazgos de IA",
-      ai1: "Realce focal no nodular",
-      ai2: "Curva cinetica sospechosa",
-      ai3: "Realce de fondo",
-      aiNote: "Valores de demostracion. Reemplazar al conectar el modelo real.",
-      notesTitle: "Notas",
-      notesPH: "Notas locales, no se suben.",
-      lblSeries: "Serie",
-      lblSlice: "Corte",
-      chipAI: "Capa IA",
-      chipGrid: "Rejilla",
-      chipMeasure: "Mediciones",
-      cornerMode: "Area de visualizacion (sin lector DICOM todavia)",
-      hint: "Suelta archivos aqui (interfaz demo)",
-      centerText: "Viewport DICOM (marcador)"
-    }
-  };
-
-  function setText(id, value){ const el=document.getElementById(id); if(el) el.textContent=value; }
-
-  function syncSlice(){
-    document.getElementById("slice").max = state.total;
-    document.getElementById("slice").value = state.slice;
-    document.getElementById("sliceText").textContent = state.slice + " / " + state.total;
-    document.getElementById("cornerSlice").textContent = (state.lang==="es" ? "Corte " : "Slice ") + state.slice;
-  }
-
-  function applyLang(lang){
-    state.lang = lang;
-    document.getElementById("btnEN").classList.toggle("active", lang==="en");
-    document.getElementById("btnES").classList.toggle("active", lang==="es");
-
-    const t = i18n[lang];
-    setText("title", t.title);
-    setText("studyInfoTitle", t.studyInfoTitle);
-    setText("lblPatient", t.lblPatient);
-    setText("lblModality", t.lblModality);
-    setText("lblSide", t.lblSide);
-    setText("lblDate", t.lblDate);
-    setText("aiTitle", t.aiTitle);
-    setText("ai1", t.ai1);
-    setText("ai2", t.ai2);
-    setText("ai3", t.ai3);
-    setText("aiNote", t.aiNote);
-    setText("notesTitle", t.notesTitle);
-    document.getElementById("notesBox").placeholder = t.notesPH;
-    setText("lblSeries", t.lblSeries);
-    setText("lblSlice", t.lblSlice);
-    setText("chipAI", t.chipAI);
-    setText("chipGrid", t.chipGrid);
-    setText("chipMeasure", t.chipMeasure);
-    setText("cornerMode", t.cornerMode);
-    setText("hint", t.hint);
-    setText("centerText", t.centerText);
-
-    syncSlice();
-  }
-
-  document.getElementById("btnEN").addEventListener("click", ()=>applyLang("en"));
-  document.getElementById("btnES").addEventListener("click", ()=>applyLang("es"));
-
-  document.getElementById("slice").addEventListener("input", (e)=>{
-    state.slice = parseInt(e.target.value, 10);
-    syncSlice();
-  });
-
-  document.getElementById("series").addEventListener("change", (e)=>{
-    const v = e.target.value;
-    if(v==="s1"){ state.total=64; setText("cornerSeries","S1"); }
-    if(v==="s2"){ state.total=48; setText("cornerSeries","S2"); }
-    if(v==="s3"){ state.total=32; setText("cornerSeries","S3"); }
-    state.slice = Math.min(state.slice, state.total);
-    syncSlice();
-  });
-
-  function toggleChip(id){
-    document.getElementById(id).classList.toggle("active");
-  }
-  document.getElementById("chipAI").addEventListener("click", ()=>toggleChip("chipAI"));
-  document.getElementById("chipGrid").addEventListener("click", ()=>toggleChip("chipGrid"));
-  document.getElementById("chipMeasure").addEventListener("click", ()=>toggleChip("chipMeasure"));
-
-  const vp = document.getElementById("viewport");
-  ["dragenter","dragover"].forEach(ev => vp.addEventListener(ev, (e)=>{
-    e.preventDefault(); e.stopPropagation();
-    vp.style.borderColor = "#22c55e";
-  }));
-  ["dragleave","drop"].forEach(ev => vp.addEventListener(ev, (e)=>{
-    e.preventDefault(); e.stopPropagation();
-    vp.style.borderColor = "#94a3b8";
-  }));
-  vp.addEventListener("drop", (e)=>{
-    const files = e.dataTransfer.files || [];
-    document.getElementById("hint").textContent = files.length + " file(s) dropped (demo)";
-  });
-  document.getElementById("fileInput").addEventListener("change", (e)=>{
-    const n = (e.target.files || []).length;
-    document.getElementById("hint").textContent = n + " file(s) selected (demo)";
-  });
-
-  applyLang("en");
-  syncSlice();
-</script>
-</body>
+    <script type="module" src="/src/main.js"></script>
+  </body>
 </html>
