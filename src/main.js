@@ -1,6 +1,6 @@
 ﻿import * as csCore from '@cornerstonejs/core';
 import * as csTools from '@cornerstonejs/tools';
-import * as dicomImageLoader from '@cornerstonejs/dicom-image-loader';
+import dicomImageLoader from '@cornerstonejs/dicom-image-loader';
 import dicomParser from 'dicom-parser';
 
 const element = document.getElementById('dicomViewport');
@@ -24,10 +24,14 @@ async function boot() {
   await csCore.init();
   await csTools.init();
 
-  // DICOM loader wiring (common pattern)
-  dicomImageLoader.external.cornerstone = csCore;
-  dicomImageLoader.external.dicomParser = dicomParser;
-  dicomImageLoader.init();
+  // Recommended pattern: init loader with dicomParser, and configure decode behavior if needed
+  dicomImageLoader.init({ dicomParser });
+  dicomImageLoader.configure({
+    decodeConfig: {
+      // Matches common Cornerstone3D usage to avoid forcing float pixel data into ints
+      convertFloatPixelDataToInt: false
+    }
+  });
 
   const {
     addTool,
@@ -39,10 +43,6 @@ async function boot() {
     LengthTool,
     Enums: toolsEnums
   } = csTools;
-
-  // Some builds expose these enums via csTools.Enums
-  const MouseBindings = (toolsEnums && toolsEnums.MouseBindings) ? toolsEnums.MouseBindings : null;
-  const KeyboardBindings = (toolsEnums && toolsEnums.KeyboardBindings) ? toolsEnums.KeyboardBindings : null;
 
   addTool(PanTool);
   addTool(ZoomTool);
@@ -73,7 +73,9 @@ async function boot() {
 
   toolGroup.addViewport(viewportId, renderingEngineId);
 
-  // Bindings: if enums exist, use them; otherwise fall back to "tool defaults" safely
+  const MouseBindings = toolsEnums && toolsEnums.MouseBindings ? toolsEnums.MouseBindings : null;
+  const KeyboardBindings = toolsEnums && toolsEnums.KeyboardBindings ? toolsEnums.KeyboardBindings : null;
+
   if (MouseBindings) {
     toolGroup.setToolActive(WindowLevelTool.toolName, { bindings: [{ mouseButton: MouseBindings.Primary }] });
     toolGroup.setToolActive(PanTool.toolName,        { bindings: [{ mouseButton: MouseBindings.Auxiliary }] });
@@ -85,11 +87,10 @@ async function boot() {
         bindings: [{ mouseButton: MouseBindings.Primary, modifierKey: KeyboardBindings.Shift }]
       });
     } else {
-      // If keyboard enum is unavailable, keep the tool added but not activated
       toolGroup.setToolPassive(LengthTool.toolName);
     }
   } else {
-    // No enums: avoid crashing, keep viewer usable
+    // Safe fallback if enums are unavailable
     toolGroup.setToolActive(StackScrollTool.toolName);
     toolGroup.setToolActive(WindowLevelTool.toolName);
     toolGroup.setToolPassive(PanTool.toolName);
