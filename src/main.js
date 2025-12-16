@@ -1,4 +1,4 @@
-﻿import { RenderingEngine, Enums, init as csInit } from '@cornerstonejs/core';
+﻿import { RenderingEngine, Enums as CoreEnums, init as csInit } from '@cornerstonejs/core';
 import {
   init as csToolsInit,
   addTool,
@@ -9,6 +9,9 @@ import {
   StackScrollTool,
   LengthTool
 } from '@cornerstonejs/tools';
+
+import MouseBindings from '@cornerstonejs/tools/enums/MouseBindings';
+import KeyboardBindings from '@cornerstonejs/tools/enums/KeyboardBindings';
 
 import * as dicomImageLoader from '@cornerstonejs/dicom-image-loader';
 import dicomParser from 'dicom-parser';
@@ -41,7 +44,7 @@ async function boot() {
   renderingEngine = new RenderingEngine(renderingEngineId);
   renderingEngine.enableElement({
     viewportId,
-    type: Enums.ViewportType.STACK,
+    type: CoreEnums.ViewportType.STACK,
     element
   });
 
@@ -58,21 +61,29 @@ async function boot() {
 
   toolGroup.addViewport(viewportId, renderingEngineId);
 
+  // Left drag: window level
   toolGroup.setToolActive(WindowLevelTool.toolName, {
-    bindings: [{ mouseButton: Enums.MouseBindings.Primary }]
+    bindings: [{ mouseButton: MouseBindings.Primary }]
   });
+
+  // Middle drag: pan
   toolGroup.setToolActive(PanTool.toolName, {
-    bindings: [{ mouseButton: Enums.MouseBindings.Auxiliary }]
+    bindings: [{ mouseButton: MouseBindings.Auxiliary }]
   });
+
+  // Right drag: zoom
   toolGroup.setToolActive(ZoomTool.toolName, {
-    bindings: [{ mouseButton: Enums.MouseBindings.Secondary }]
+    bindings: [{ mouseButton: MouseBindings.Secondary }]
   });
 
-  // Mouse wheel slice scrolling (use tool defaults)
-  toolGroup.setToolActive(StackScrollTool.toolName);
+  // Mouse wheel: stack scroll
+  toolGroup.setToolActive(StackScrollTool.toolName, {
+    bindings: [{ mouseButton: MouseBindings.Wheel }]
+  });
 
+  // Shift + left: length measurement
   toolGroup.setToolActive(LengthTool.toolName, {
-    bindings: [{ mouseButton: Enums.MouseBindings.Primary, modifierKey: Enums.KeyboardBindings.Shift }]
+    bindings: [{ mouseButton: MouseBindings.Primary, modifierKey: KeyboardBindings.Shift }]
   });
 
   viewport.render();
@@ -89,7 +100,11 @@ async function loadFiles(fileList) {
   setStatus('Loading stack...');
   await viewport.setStack(imageIds);
   viewport.render();
-  setStatus('Loaded ' + imageIds.length + ' slices. Wheel scroll, left drag window/level, middle pan, right zoom, Shift+left length.');
+
+  setStatus(
+    'Loaded ' + imageIds.length +
+    ' slices. Wheel scroll, left drag window/level, middle pan, right zoom, Shift+left length.'
+  );
 }
 
 fileInput.addEventListener('change', async (e) => {
