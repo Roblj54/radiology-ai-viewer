@@ -23,14 +23,8 @@
     }
     .langBtn.active{ background:rgba(255,255,255,.16); }
     main{ display:grid; grid-template-columns:340px 1fr; height:calc(100vh - 48px); }
-    aside{
-      background:var(--panel); border-right:1px solid var(--line);
-      padding:14px; overflow:auto;
-    }
-    .card{
-      border:1px solid var(--line); background:#fff; border-radius:12px;
-      padding:12px; margin-bottom:12px;
-    }
+    aside{ background:var(--panel); border-right:1px solid var(--line); padding:14px; overflow:auto; }
+    .card{ border:1px solid var(--line); background:#fff; border-radius:12px; padding:12px; margin-bottom:12px; }
     .card h3{ margin:0 0 10px 0; font-size:14px; }
     .kv{ font-size:13px; margin:4px 0; color:var(--ink); }
     .kv b{ font-weight:700; }
@@ -118,9 +112,7 @@
       <div class="badge"><span id="ai1">Focal non-mass enhancement</span> <span class="score">0.87</span></div><br/>
       <div class="badge"><span id="ai2">Suspicious kinetic curve</span> <span class="score">0.81</span></div><br/>
       <div class="badge"><span id="ai3">Background enhancement</span> <span class="score">0.42</span></div>
-      <div class="small" id="aiNote" style="margin-top:10px;">
-        Demo values only. Replace with real model output when connected.
-      </div>
+      <div class="small" id="aiNote" style="margin-top:10px;">Demo values only. Replace with real model output when connected.</div>
     </div>
 
     <div class="card">
@@ -152,9 +144,7 @@
       <button class="chip" id="chipGrid" type="button">Grid</button>
       <button class="chip" id="chipMeasure" type="button">Measurements</button>
 
-      <div class="row">
-        <input id="fileInput" type="file" multiple />
-      </div>
+      <input id="fileInput" type="file" multiple />
     </div>
 
     <div id="viewport">
@@ -225,6 +215,7 @@
   };
 
   function setText(id, value){ const el=document.getElementById(id); if(el) el.textContent=value; }
+
   function applyLang(lang){
     state.lang = lang;
     document.getElementById("btnEN").classList.toggle("active", lang==="en");
@@ -252,6 +243,7 @@
     setText("cornerMode", t.cornerMode);
     setText("hint", t.hint);
     setText("centerText", t.centerText);
+    syncSlice();
   }
 
   function syncSlice(){
@@ -271,9 +263,10 @@
 
   document.getElementById("series").addEventListener("change", (e)=>{
     const v = e.target.value;
-    if(v==="s1"){ state.total=64; state.slice=Math.min(state.slice,64); setText("cornerSeries","S1"); }
-    if(v==="s2"){ state.total=48; state.slice=Math.min(state.slice,48); setText("cornerSeries","S2"); }
-    if(v==="s3"){ state.total=32; state.slice=Math.min(state.slice,32); setText("cornerSeries","S3"); }
+    if(v==="s1"){ state.total=64; setText("cornerSeries","S1"); }
+    if(v==="s2"){ state.total=48; setText("cornerSeries","S2"); }
+    if(v==="s3"){ state.total=32; setText("cornerSeries","S3"); }
+    state.slice = Math.min(state.slice, state.total);
     syncSlice();
   });
 
@@ -295,16 +288,15 @@
     vp.style.borderColor = "#94a3b8";
   }));
   vp.addEventListener("drop", (e)=>{
-    const files = e.dataTransfer.files;
+    const files = e.dataTransfer.files || [];
     document.getElementById("hint").textContent = files.length + " file(s) dropped (demo)";
   });
   document.getElementById("fileInput").addEventListener("change", (e)=>{
-    const n = e.target.files.length;
+    const n = (e.target.files || []).length;
     document.getElementById("hint").textContent = n + " file(s) selected (demo)";
   });
 
   applyLang("en");
-  syncSlice();
 </script>
 </body>
 </html>
