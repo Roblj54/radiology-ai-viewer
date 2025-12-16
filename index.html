@@ -216,6 +216,13 @@
 
   function setText(id, value){ const el=document.getElementById(id); if(el) el.textContent=value; }
 
+  function syncSlice(){
+    document.getElementById("slice").max = state.total;
+    document.getElementById("slice").value = state.slice;
+    document.getElementById("sliceText").textContent = state.slice + " / " + state.total;
+    document.getElementById("cornerSlice").textContent = (state.lang==="es" ? "Corte " : "Slice ") + state.slice;
+  }
+
   function applyLang(lang){
     state.lang = lang;
     document.getElementById("btnEN").classList.toggle("active", lang==="en");
@@ -246,13 +253,6 @@
     syncSlice();
   }
 
-  function syncSlice(){
-    document.getElementById("slice").max = state.total;
-    document.getElementById("slice").value = state.slice;
-    document.getElementById("sliceText").textContent = state.slice + " / " + state.total;
-    document.getElementById("cornerSlice").textContent = (state.lang==="es" ? "Corte " : "Slice ") + state.slice;
-  }
-
   document.getElementById("btnEN").addEventListener("click", ()=>applyLang("en"));
   document.getElementById("btnES").addEventListener("click", ()=>applyLang("es"));
 
@@ -270,10 +270,7 @@
     syncSlice();
   });
 
-  function toggleChip(id){
-    const el = document.getElementById(id);
-    el.classList.toggle("active");
-  }
+  function toggleChip(id){ document.getElementById(id).classList.toggle("active"); }
   document.getElementById("chipAI").addEventListener("click", ()=>toggleChip("chipAI"));
   document.getElementById("chipGrid").addEventListener("click", ()=>toggleChip("chipGrid"));
   document.getElementById("chipMeasure").addEventListener("click", ()=>toggleChip("chipMeasure"));
