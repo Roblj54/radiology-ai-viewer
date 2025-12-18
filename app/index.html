@@ -1,0 +1,65 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radiology AI Viewer</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin:0; font-family: system-ui, Segoe UI, Roboto, Arial; background:#0b1220; color:#e5e7eb; }
+      header { padding:14px 18px; background:#0a1020; border-bottom:1px solid #1f2a44; font-weight:600; }
+      .wrap { display:grid; grid-template-columns: 320px 1fr; gap:14px; padding:14px; height: calc(100vh - 54px); box-sizing:border-box; }
+      .panel { background:#0a1426; border:1px solid #1f2a44; border-radius:10px; padding:14px; }
+      .viewport { background:#081225; border:1px dashed #2a3b62; border-radius:10px; min-height: 420px; }
+      .muted { color:#9ca3af; font-size:12px; }
+      #status { margin-top:10px; font-size:13px; color:#8ef3c5; white-space:pre-wrap; }
+      .btn { display:inline-block; padding:6px 10px; background:#111c34; border:1px solid #223157; border-radius:8px; cursor:pointer; }
+      input[type=file] { display:block; margin-top:10px; }
+      .controls { margin-top:14px; font-size:12px; color:#cbd5e1; line-height:1.35; }
+      .kbd { display:inline-block; padding:0 6px; border:1px solid #2a3b62; border-radius:6px; background:#0b1730; }
+    </style>
+
+    <script>
+      function __setStatus(msg){
+        const el = document.getElementById('status');
+        if (el) el.textContent = msg;
+      }
+      window.addEventListener('error', function(e){
+        __setStatus('App load error:\n' + (e && e.message ? e.message : String(e)));
+      });
+      window.addEventListener('unhandledrejection', function(e){
+        const r = e && e.reason ? e.reason : e;
+        const msg = (r && r.message) ? r.message : String(r);
+        __setStatus('Unhandled promise:\n' + msg);
+      });
+      document.addEventListener('DOMContentLoaded', function(){
+        __setStatus('Booting...');
+      });
+    </script>
+  </head>
+  <body>
+    <header>Radiology AI Viewer <span class="muted">Cornerstone3D stack viewer</span></header>
+
+    <div class="wrap">
+      <div class="panel">
+        <div style="font-weight:600; margin-bottom:6px;">Load DICOM series</div>
+        <div class="muted">Use file picker (multiple files) or drag and drop into the viewport.</div>
+        <input id="dicomFiles" type="file" multiple />
+        <div id="status">Booting...</div>
+
+        <div class="controls">
+          <div style="margin-top:10px; font-weight:600;">Controls</div>
+          Mouse wheel = scroll slices<br/>
+          Left drag = window/level<br/>
+          Middle drag = pan<br/>
+          Right drag = zoom<br/>
+          <span class="kbd">Shift</span> + left = length tool
+        </div>
+      </div>
+
+      <div id="dicomViewport" class="viewport panel"></div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
