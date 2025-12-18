@@ -4,20 +4,16 @@ const fileInput = document.getElementById('dicomFiles');
 
 let renderingEngine;
 let viewport;
-let dicomImageLoaderMod; // cached module
+let dicomImageLoaderMod;
 
 function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
-
 function errToText(err) {
   if (!err) return 'Unknown error';
-  if (err.stack) return err.stack;
-  if (err.message) return err.message;
-  return String(err);
+  return err.stack || err.message || String(err);
 }
 
 async function boot() {
   setStatus('Loading Cornerstone modules...');
-
   try {
     const csCore = await import('@cornerstonejs/core');
     const csTools = await import('@cornerstonejs/tools');
@@ -31,10 +27,10 @@ async function boot() {
     await csCore.init();
     await csTools.init();
 
-    // Newer Cornerstone3D guidance mentions using init() for the loader. 
-    dicomImageLoader.init({ dicomParser });
+    if (typeof dicomImageLoader.init === 'function') {
+      dicomImageLoader.init({ dicomParser });
+    }
 
-    // Tools
     const {
       addTool,
       ToolGroupManager,
@@ -72,7 +68,6 @@ async function boot() {
     toolGroup.addTool(PanTool.toolName);
     toolGroup.addTool(ZoomTool.toolName);
     toolGroup.addTool(LengthTool.toolName);
-
     toolGroup.addViewport(viewportId, renderingEngineId);
 
     const MouseBindings = toolsEnums?.MouseBindings ?? null;
@@ -137,12 +132,8 @@ async function loadFiles(fileList) {
   }
 }
 
-fileInput?.addEventListener('change', async (e) => loadFiles(e.target.files));
-
+fileInput?.addEventListener('change', (e) => loadFiles(e.target.files));
 element?.addEventListener('dragover', (e) => { e.preventDefault(); });
-element?.addEventListener('drop', async (e) => {
-  e.preventDefault();
-  loadFiles(e.dataTransfer.files);
-});
+element?.addEventListener('drop', (e) => { e.preventDefault(); loadFiles(e.dataTransfer.files); });
 
 boot();
