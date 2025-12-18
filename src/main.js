@@ -1,131 +1,148 @@
-﻿import * as csCore from '@cornerstonejs/core';
-import * as csTools from '@cornerstonejs/tools';
-import dicomImageLoader from '@cornerstonejs/dicom-image-loader';
-import dicomParser from 'dicom-parser';
-
-const element = document.getElementById('dicomViewport');
+﻿const element = document.getElementById('dicomViewport');
 const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('dicomFiles');
 
 let renderingEngine;
 let viewport;
+let dicomImageLoaderMod; // cached module
 
-function setStatus(msg) { statusEl.textContent = msg; }
+function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 
-function showFatal(err) {
-  console.error(err);
-  const msg = (err && err.message) ? err.message : String(err);
-  setStatus('Initialization failed: ' + msg + ' (open DevTools Console for details)');
+function errToText(err) {
+  if (!err) return 'Unknown error';
+  if (err.stack) return err.stack;
+  if (err.message) return err.message;
+  return String(err);
 }
 
 async function boot() {
-  setStatus('Initializing Cornerstone...');
+  setStatus('Loading Cornerstone modules...');
 
-  await csCore.init();
-  await csTools.init();
+  try {
+    const csCore = await import('@cornerstonejs/core');
+    const csTools = await import('@cornerstonejs/tools');
+    dicomImageLoaderMod = await import('@cornerstonejs/dicom-image-loader');
+    const dicomParserMod = await import('dicom-parser');
 
-  // Recommended pattern: init loader with dicomParser, and configure decode behavior if needed
-  dicomImageLoader.init({ dicomParser });
-  dicomImageLoader.configure({
-    decodeConfig: {
-      // Matches common Cornerstone3D usage to avoid forcing float pixel data into ints
-      convertFloatPixelDataToInt: false
-    }
-  });
+    const dicomParser = dicomParserMod.default ?? dicomParserMod;
+    const dicomImageLoader = dicomImageLoaderMod.default ?? dicomImageLoaderMod;
 
-  const {
-    addTool,
-    ToolGroupManager,
-    PanTool,
-    ZoomTool,
-    WindowLevelTool,
-    StackScrollTool,
-    LengthTool,
-    Enums: toolsEnums
-  } = csTools;
+    setStatus('Initializing Cornerstone...');
+    await csCore.init();
+    await csTools.init();
 
-  addTool(PanTool);
-  addTool(ZoomTool);
-  addTool(WindowLevelTool);
-  addTool(StackScrollTool);
-  addTool(LengthTool);
+    // Newer Cornerstone3D guidance mentions using init() for the loader. 
+    dicomImageLoader.init({ dicomParser });
 
-  const renderingEngineId = 're1';
-  const viewportId = 'vp1';
+    // Tools
+    const {
+      addTool,
+      ToolGroupManager,
+      PanTool,
+      ZoomTool,
+      WindowLevelTool,
+      StackScrollTool,
+      LengthTool,
+      Enums: toolsEnums
+    } = csTools;
 
-  renderingEngine = new csCore.RenderingEngine(renderingEngineId);
-  renderingEngine.enableElement({
-    viewportId,
-    type: csCore.Enums.ViewportType.STACK,
-    element
-  });
+    addTool(PanTool);
+    addTool(ZoomTool);
+    addTool(WindowLevelTool);
+    addTool(StackScrollTool);
+    addTool(LengthTool);
 
-  viewport = renderingEngine.getViewport(viewportId);
+    const renderingEngineId = 're1';
+    const viewportId = 'vp1';
 
-  const toolGroupId = 'tg1';
-  const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
+    renderingEngine = new csCore.RenderingEngine(renderingEngineId);
+    renderingEngine.enableElement({
+      viewportId,
+      type: csCore.Enums.ViewportType.STACK,
+      element
+    });
 
-  toolGroup.addTool(StackScrollTool.toolName);
-  toolGroup.addTool(WindowLevelTool.toolName);
-  toolGroup.addTool(PanTool.toolName);
-  toolGroup.addTool(ZoomTool.toolName);
-  toolGroup.addTool(LengthTool.toolName);
+    viewport = renderingEngine.getViewport(viewportId);
 
-  toolGroup.addViewport(viewportId, renderingEngineId);
+    const toolGroupId = 'tg1';
+    const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
-  const MouseBindings = toolsEnums && toolsEnums.MouseBindings ? toolsEnums.MouseBindings : null;
-  const KeyboardBindings = toolsEnums && toolsEnums.KeyboardBindings ? toolsEnums.KeyboardBindings : null;
+    toolGroup.addTool(StackScrollTool.toolName);
+    toolGroup.addTool(WindowLevelTool.toolName);
+    toolGroup.addTool(PanTool.toolName);
+    toolGroup.addTool(ZoomTool.toolName);
+    toolGroup.addTool(LengthTool.toolName);
 
-  if (MouseBindings) {
-    toolGroup.setToolActive(WindowLevelTool.toolName, { bindings: [{ mouseButton: MouseBindings.Primary }] });
-    toolGroup.setToolActive(PanTool.toolName,        { bindings: [{ mouseButton: MouseBindings.Auxiliary }] });
-    toolGroup.setToolActive(ZoomTool.toolName,       { bindings: [{ mouseButton: MouseBindings.Secondary }] });
-    toolGroup.setToolActive(StackScrollTool.toolName,{ bindings: [{ mouseButton: MouseBindings.Wheel }] });
+    toolGroup.addViewport(viewportId, renderingEngineId);
 
-    if (KeyboardBindings && KeyboardBindings.Shift != null) {
-      toolGroup.setToolActive(LengthTool.toolName, {
-        bindings: [{ mouseButton: MouseBindings.Primary, modifierKey: KeyboardBindings.Shift }]
-      });
+    const MouseBindings = toolsEnums?.MouseBindings ?? null;
+    const KeyboardBindings = toolsEnums?.KeyboardBindings ?? null;
+
+    if (MouseBindings) {
+      toolGroup.setToolActive(WindowLevelTool.toolName, { bindings: [{ mouseButton: MouseBindings.Primary }] });
+      toolGroup.setToolActive(PanTool.toolName,        { bindings: [{ mouseButton: MouseBindings.Auxiliary }] });
+      toolGroup.setToolActive(ZoomTool.toolName,       { bindings: [{ mouseButton: MouseBindings.Secondary }] });
+      toolGroup.setToolActive(StackScrollTool.toolName,{ bindings: [{ mouseButton: MouseBindings.Wheel }] });
+
+      if (KeyboardBindings?.Shift != null) {
+        toolGroup.setToolActive(LengthTool.toolName, {
+          bindings: [{ mouseButton: MouseBindings.Primary, modifierKey: KeyboardBindings.Shift }]
+        });
+      } else {
+        toolGroup.setToolPassive(LengthTool.toolName);
+      }
     } else {
+      toolGroup.setToolActive(StackScrollTool.toolName);
+      toolGroup.setToolActive(WindowLevelTool.toolName);
+      toolGroup.setToolPassive(PanTool.toolName);
+      toolGroup.setToolPassive(ZoomTool.toolName);
       toolGroup.setToolPassive(LengthTool.toolName);
     }
-  } else {
-    // Safe fallback if enums are unavailable
-    toolGroup.setToolActive(StackScrollTool.toolName);
-    toolGroup.setToolActive(WindowLevelTool.toolName);
-    toolGroup.setToolPassive(PanTool.toolName);
-    toolGroup.setToolPassive(ZoomTool.toolName);
-    toolGroup.setToolPassive(LengthTool.toolName);
-  }
 
-  viewport.render();
-  setStatus('Ready. Choose DICOM files (one series) to load.');
+    viewport.render();
+    setStatus('Ready. Choose DICOM files (one series) to load.');
+  } catch (e) {
+    console.error(e);
+    setStatus('Initialization failed:\n' + errToText(e));
+  }
 }
 
 async function loadFiles(fileList) {
   const files = Array.from(fileList || []).filter(f => f && f.size > 0);
   if (files.length === 0) return;
 
-  setStatus('Indexing files...');
-  const imageIds = files.map(f => dicomImageLoader.wadouri.fileManager.add(f));
+  if (!viewport) {
+    setStatus('Viewer not initialized yet. See error above.');
+    return;
+  }
 
-  setStatus('Loading stack...');
-  await viewport.setStack(imageIds);
-  viewport.render();
+  const dicomImageLoader = (dicomImageLoaderMod?.default ?? dicomImageLoaderMod);
+  if (!dicomImageLoader?.wadouri?.fileManager?.add) {
+    setStatus('DICOM loader not ready (wadouri.fileManager.add missing).');
+    return;
+  }
 
-  setStatus('Loaded ' + imageIds.length + ' slices. Wheel scroll, left drag window/level, middle pan, right zoom.');
+  try {
+    setStatus('Indexing files...');
+    const imageIds = files.map(f => dicomImageLoader.wadouri.fileManager.add(f));
+
+    setStatus('Loading stack...');
+    await viewport.setStack(imageIds);
+    viewport.render();
+
+    setStatus('Loaded ' + imageIds.length + ' slices. Wheel scroll, left drag window/level, middle pan, right zoom.');
+  } catch (e) {
+    console.error(e);
+    setStatus('Load failed:\n' + errToText(e) + '\nTry selecting only one series.');
+  }
 }
 
-fileInput.addEventListener('change', async (e) => {
-  try { await loadFiles(e.target.files); }
-  catch (err) { console.error(err); setStatus('Load failed. Try selecting only one series.'); }
-});
+fileInput?.addEventListener('change', async (e) => loadFiles(e.target.files));
 
-element.addEventListener('dragover', (e) => { e.preventDefault(); });
-element.addEventListener('drop', async (e) => {
+element?.addEventListener('dragover', (e) => { e.preventDefault(); });
+element?.addEventListener('drop', async (e) => {
   e.preventDefault();
-  try { await loadFiles(e.dataTransfer.files); }
-  catch (err) { console.error(err); setStatus('Drop failed. Try selecting only one series.'); }
+  loadFiles(e.dataTransfer.files);
 });
 
-boot().catch(showFatal);
+boot();
