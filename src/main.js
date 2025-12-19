@@ -4,7 +4,7 @@ const fileInput = document.getElementById('dicomFiles');
 
 let renderingEngine;
 let viewport;
-let dicomImageLoaderMod;
+let wadouri;
 
 function setStatus(msg) { if (statusEl) statusEl.textContent = msg; }
 function errToText(err) { return err?.stack || err?.message || String(err); }
@@ -15,18 +15,19 @@ async function boot() {
   try {
     const csCore = await import('@cornerstonejs/core');
     const csTools = await import('@cornerstonejs/tools');
-    dicomImageLoaderMod = await import('@cornerstonejs/dicom-image-loader');
-    const dicomParserMod = await import('dicom-parser');
-
-    const dicomParser = dicomParserMod.default ?? dicomParserMod;
-    const dicomImageLoader = dicomImageLoaderMod.default ?? dicomImageLoaderMod;
+    const dicomImageLoader = await import('@cornerstonejs/dicom-image-loader');
 
     setStatus('Initializing Cornerstone...');
+
     await csCore.init();
     await csTools.init();
 
-    if (typeof dicomImageLoader.init === 'function') {
-      dicomImageLoader.init({ dicomParser });
+    // Cornerstone migration guide: use init(); dicomParser is internal now
+    dicomImageLoader.init({ maxWebWorkers: navigator.hardwareConcurrency || 1 });
+    wadouri = dicomImageLoader.wadouri;
+
+    if (!wadouri?.fileManager?.add) {
+      throw new Error('wadouri.fileManager.add is missing. DICOM image loader did not initialize.');
     }
 
     const {
@@ -96,7 +97,7 @@ async function boot() {
     setStatus('Ready. Choose DICOM files (one series) to load.');
   } catch (e) {
     console.error(e);
-    setStatus('Initialization failed:\n' + errToText(e));
+    setStatus('Initialization failed:\\n' + errToText(e));
   }
 }
 
@@ -109,15 +110,12 @@ async function loadFiles(fileList) {
     return;
   }
 
-  const dicomImageLoader = (dicomImageLoaderMod?.default ?? dicomImageLoaderMod);
-  if (!dicomImageLoader?.wadouri?.fileManager?.add) {
-    setStatus('DICOM loader not ready (wadouri.fileManager.add missing).');
-    return;
-  }
-
   try {
+    // helpful when filenames are like IM-0001-0001.dcm, IM-0001-0002.dcm, etc
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
     setStatus('Indexing files...');
-    const imageIds = files.map(f => dicomImageLoader.wadouri.fileManager.add(f));
+    const imageIds = files.map(f => wadouri.fileManager.add(f));
 
     setStatus('Loading stack...');
     await viewport.setStack(imageIds);
@@ -126,7 +124,7 @@ async function loadFiles(fileList) {
     setStatus('Loaded ' + imageIds.length + ' slices. Wheel scroll, left drag window/level, middle pan, right zoom.');
   } catch (e) {
     console.error(e);
-    setStatus('Load failed:\n' + errToText(e) + '\nTry selecting only one series.');
+    setStatus('Load failed:\\n' + errToText(e) + '\\nTry selecting only one series.');
   }
 }
 

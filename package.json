@@ -9,6 +9,7 @@
         "preview": "vite preview"
     },
     "devDependencies": {
+        "@originjs/vite-plugin-commonjs": "^1.0.3",
         "vite": "^7.3.0"
     },
     "dependencies": {

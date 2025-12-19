@@ -1,1 +1,0 @@
-import{d5 as t,cg as a}from"./index-B-nbFw5B.js";const e=new t("imageRetrievalPool");e.setMaxSimultaneousRequests(a.Interaction,200);e.setMaxSimultaneousRequests(a.Thumbnail,200);e.setMaxSimultaneousRequests(a.Prefetch,200);e.grabDelay=0;export{e as i};
