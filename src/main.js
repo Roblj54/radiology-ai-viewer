@@ -246,3 +246,15 @@ boot();
   else start();
 })();
 
+
+;(() => {
+  // __ravAIServerPanel_v1
+  function start() {
+    import("./aiOverlayServer.js")
+      .then(m => m.installAIServerPanel && m.installAIServerPanel())
+      .catch(() => {});
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+
