@@ -59,46 +59,7 @@ async function boot() {
     });
 
     viewport = renderingEngine.getViewport(viewportId);
-;(() => { // __ravExposeViewport_v1
-  try { window.__rav_viewport = element; } catch {}
-})();
-;(() => {
-  try {
-    if (window.__aiMock) return;
-
-    let btn = document.getElementById("btnAIMock");
-    if (!btn) {
-      btn = document.createElement("button");
-      btn.id = "btnAIMock";
-      btn.type = "button";
-      btn.textContent = "AI Overlay (mock)";
-      btn.style.cssText = "position:fixed; top:12px; right:12px; z-index:9999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; color:#111; font-weight:600; cursor:pointer;";
-      document.body.appendChild(btn);
-    }
-
-    const canvas = document.querySelector("canvas");
-    const container =
-      (typeof viewportElement !== "undefined" && viewportElement) ||
-      (typeof element !== "undefined" && element) ||
-      document.getElementById("viewport") ||
-      document.querySelector("[data-viewport]") ||
-      (canvas ? canvas.parentElement : null);
-
-    if (!container) {
-      console.warn("AI overlay: could not find viewport container");
-      return;
-    }
-
-    window.__rav_viewport = element;
-    const aiMock = setupAIMockOverlay({ viewport: element, container: container });
-    btn.addEventListener("click", () => aiMock.toggle());
-    window.__aiMock = aiMock;
-  } catch (e) {
-    console.warn("AI overlay init failed:", e);
-  }
-})();
-
-    const toolGroupId = 'tg1';
+window.__rav_viewport = viewport;const toolGroupId = 'tg1';
     const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
 
     toolGroup.addTool(StackScrollTool.toolName);
@@ -172,51 +133,86 @@ element?.addEventListener('dragover', (e) => { e.preventDefault(); });
 element?.addEventListener('drop', (e) => { e.preventDefault(); loadFiles(e.dataTransfer.files); });
 
 boot();
-
-
-
 ;(() => {
-  // __aiMockInstaller_v1
+  // __ravAIMock_v2
+  function getContainer() {
+    return (
+      (typeof element !== "undefined" && element) ||
+      document.getElementById("dicomViewport") ||
+      document.getElementById("viewport") ||
+      document.querySelector("[data-viewport]") ||
+      (document.querySelector("canvas") ? document.querySelector("canvas").parentElement : null)
+    );
+  }
+
+  function getViewportObj() {
+    try {
+      if (window.__rav_viewport) return window.__rav_viewport;
+      if (typeof viewport !== "undefined" && viewport) return viewport;
+    } catch {}
+    return null;
+  }
+
+  function hasImages(vp) {
+    try {
+      if (vp && typeof vp.getImageIds === "function") return (vp.getImageIds() || []).length > 0;
+    } catch {}
+    return false;
+  }
+
   function ensureBtn() {
     let btn = document.getElementById("btnAIMock");
     if (!btn) {
       btn = document.createElement("button");
       btn.id = "btnAIMock";
       btn.type = "button";
-      btn.textContent = "AI Overlay (mock)";
-      btn.style.cssText =
-        "position:fixed; top:12px; right:12px; z-index:999999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; color:#111; font-weight:600; cursor:pointer;";
+      btn.textContent = "AI Overlay";
+      btn.setAttribute("aria-label", "Toggle AI overlay");
       document.body.appendChild(btn);
     }
+
+    // Force readable styling (in case global CSS overrides)
+    btn.style.setProperty("position", "fixed", "important");
+    btn.style.setProperty("top", "56px", "important");
+    btn.style.setProperty("right", "12px", "important");
+    btn.style.setProperty("z-index", "1000000", "important");
+    btn.style.setProperty("padding", "8px 10px", "important");
+    btn.style.setProperty("border-radius", "10px", "important");
+    btn.style.setProperty("border", "1px solid rgba(255,255,255,0.35)", "important");
+    btn.style.setProperty("background", "rgba(255,255,255,0.92)", "important");
+    btn.style.setProperty("color", "#111", "important");
+    btn.style.setProperty("font-weight", "700", "important");
+    btn.style.setProperty("font-size", "13px", "important");
+    btn.style.setProperty("line-height", "1", "important");
+    btn.style.setProperty("cursor", "pointer", "important");
+    btn.style.setProperty("backdrop-filter", "blur(6px)", "important");
     return btn;
   }
 
-  function findContainer() {
-    const canvas =
-      document.querySelector("#viewport canvas") ||
-      document.querySelector("[data-viewport] canvas") ||
-      document.querySelector("canvas");
-    return (
-      document.getElementById("viewport") ||
-      document.querySelector("[data-viewport]") ||
-      (canvas ? canvas.parentElement : null)
-    );
+  function installWheelGuard() {
+    const container = getContainer();
+    if (!container || container.__ravWheelGuard) return;
+    container.__ravWheelGuard = true;
+
+    // Prevent StackScroll errors when no images are loaded yet
+    container.addEventListener("wheel", (ev) => {
+      const vp = getViewportObj();
+      if (!hasImages(vp)) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+      }
+    }, { capture: true, passive: false });
   }
 
-  function installIfReady() {
+  function installOverlay() {
     if (window.__aiMock) return window.__aiMock;
 
-    const container = findContainer();
+    const container = getContainer();
     if (!container) return null;
 
-    // If your app exposes a real Cornerstone viewport, use it. Otherwise overlay still works in pixel mode.
-    const viewport =
-      window.__rav_viewport ||
-      window.__cornerstoneViewport ||
-      null;
-
+    const vp = getViewportObj(); // can be null, aiOverlayMock still works in pixel mode
     try {
-      const ai = setupAIMockOverlay({ viewport, container });
+      const ai = setupAIMockOverlay({ viewport: vp, container });
       window.__aiMock = ai;
       return ai;
     } catch (e) {
@@ -227,57 +223,26 @@ boot();
 
   function start() {
     const btn = ensureBtn();
+    installWheelGuard();
 
     btn.addEventListener("click", () => {
-      const ai = installIfReady();
+      const ai = installOverlay();
       if (!ai) {
-        alert("Viewport not ready yet. Load a DICOM series first, then click again.");
+        alert("Load a DICOM series first, then click AI Overlay again.");
         return;
       }
       ai.toggle();
     });
 
-    // Auto-install once a canvas appears
     const mo = new MutationObserver(() => {
-      if (!window.__aiMock) {
-        const c = findContainer();
-        if (c && c.querySelector("canvas")) installIfReady();
-      }
+      installWheelGuard();
+      const vp = getViewportObj();
+      if (!window.__aiMock && hasImages(vp)) installOverlay();
     });
     mo.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", start);
-  } else {
-    start();
-  }
-})();
-
-;(() => {
-  // __ravScrollGuard_v1
-  function getViewportContainer() {
-    return (
-      document.getElementById("viewport") ||
-      document.querySelector("[data-viewport]") ||
-      (document.querySelector("canvas") ? document.querySelector("canvas").parentElement : null)
-    );
-  }
-
-  const el = getViewportContainer();
-  if (!el || el.__ravScrollGuardInstalled) return;
-  el.__ravScrollGuardInstalled = true;
-
-  // Capture wheel early. If viewport has 0 imageIds, swallow the wheel so tools do not throw.
-  el.addEventListener("wheel", (ev) => {
-    try {
-      const vp = window.__rav_viewport;
-      const n = (vp && typeof vp.getImageIds === "function") ? vp.getImageIds().length : 0;
-      if (!n) {
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-      }
-    } catch {}
-  }, { capture: true, passive: false });
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();
 
