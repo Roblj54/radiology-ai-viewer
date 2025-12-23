@@ -170,3 +170,83 @@ element?.addEventListener('drop', (e) => { e.preventDefault(); loadFiles(e.dataT
 
 boot();
 
+
+
+;(() => {
+  // __aiMockInstaller_v1
+  function ensureBtn() {
+    let btn = document.getElementById("btnAIMock");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "btnAIMock";
+      btn.type = "button";
+      btn.textContent = "AI Overlay (mock)";
+      btn.style.cssText =
+        "position:fixed; top:12px; right:12px; z-index:999999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; cursor:pointer;";
+      document.body.appendChild(btn);
+    }
+    return btn;
+  }
+
+  function findContainer() {
+    const canvas =
+      document.querySelector("#viewport canvas") ||
+      document.querySelector("[data-viewport] canvas") ||
+      document.querySelector("canvas");
+    return (
+      document.getElementById("viewport") ||
+      document.querySelector("[data-viewport]") ||
+      (canvas ? canvas.parentElement : null)
+    );
+  }
+
+  function installIfReady() {
+    if (window.__aiMock) return window.__aiMock;
+
+    const container = findContainer();
+    if (!container) return null;
+
+    // If your app exposes a real Cornerstone viewport, use it. Otherwise overlay still works in pixel mode.
+    const viewport =
+      window.__rav_viewport ||
+      window.__cornerstoneViewport ||
+      null;
+
+    try {
+      const ai = setupAIMockOverlay({ viewport, container });
+      window.__aiMock = ai;
+      return ai;
+    } catch (e) {
+      console.warn("AI overlay install failed:", e);
+      return null;
+    }
+  }
+
+  function start() {
+    const btn = ensureBtn();
+
+    btn.addEventListener("click", () => {
+      const ai = installIfReady();
+      if (!ai) {
+        alert("Viewport not ready yet. Load a DICOM series first, then click again.");
+        return;
+      }
+      ai.toggle();
+    });
+
+    // Auto-install once a canvas appears
+    const mo = new MutationObserver(() => {
+      if (!window.__aiMock) {
+        const c = findContainer();
+        if (c && c.querySelector("canvas")) installIfReady();
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
+  }
+})();
