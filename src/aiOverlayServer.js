@@ -5,7 +5,6 @@ function getApiBase() {
   const fromQS = qs.get("api");
   if (fromQS) return fromQS;
 
-  // Vite env (baked at build time)
   try {
     if (import.meta?.env?.VITE_AI_API_BASE) return import.meta.env.VITE_AI_API_BASE;
   } catch {}
@@ -40,8 +39,7 @@ function ensureOverlay(container) {
     container.style.position = container.style.position || "relative";
     ol = document.createElement("div");
     ol.className = "ai-server-overlay";
-    ol.style.cssText =
-      "position:absolute; inset:0; pointer-events:none; z-index:9999;";
+    ol.style.cssText = "position:absolute; inset:0; pointer-events:none; z-index:9999;";
     container.appendChild(ol);
   }
   return ol;

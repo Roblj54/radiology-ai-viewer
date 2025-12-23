@@ -24,7 +24,7 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 
 // POST /analyze
 // body: { image: "data:image/png;base64,...", meta?: {...} }
-// returns: { boxes: [{x,y,w,h,label,score}] } where coords are normalized 0..1
+// returns: { boxes: [{x,y,w,h,label,score}] } coords are normalized 0..1
 app.post("/analyze", async (req, res) => {
   try {
     const { image } = req.body || {};
@@ -32,8 +32,7 @@ app.post("/analyze", async (req, res) => {
       return res.status(400).json({ error: "Missing or invalid 'image' data URL." });
     }
 
-    // TODO: Replace this mock with your real Radiology AI integration.
-    // For now, return deterministic sample boxes.
+    // TODO: replace with your real AI call
     const boxes = [
       { x: 0.58, y: 0.22, w: 0.22, h: 0.18, label: "Finding A (mock)", score: 0.88 },
       { x: 0.30, y: 0.55, w: 0.18, h: 0.14, label: "Finding B (mock)", score: 0.73 }
