@@ -1,4 +1,5 @@
-﻿const element = document.getElementById('dicomViewport');
+﻿import { setupAIMockOverlay } from "./aiOverlayMock.js";
+const element = document.getElementById('dicomViewport');
 const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('dicomFiles');
 
@@ -58,6 +59,41 @@ async function boot() {
     });
 
     viewport = renderingEngine.getViewport(viewportId);
+;(() => {
+  try {
+    if (window.__aiMock) return;
+
+    let btn = document.getElementById("btnAIMock");
+    if (!btn) {
+      btn = document.createElement("button");
+      btn.id = "btnAIMock";
+      btn.type = "button";
+      btn.textContent = "AI Overlay (mock)";
+      btn.style.cssText = "position:fixed; top:12px; right:12px; z-index:9999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; cursor:pointer;";
+      document.body.appendChild(btn);
+    }
+
+    const canvas = document.querySelector("canvas");
+    const container =
+      (typeof viewportElement !== "undefined" && viewportElement) ||
+      (typeof element !== "undefined" && element) ||
+      document.getElementById("viewport") ||
+      document.querySelector("[data-viewport]") ||
+      (canvas ? canvas.parentElement : null);
+
+    if (!container) {
+      console.warn("AI overlay: could not find viewport container");
+      return;
+    }
+
+    window.__rav_viewport = element;
+    const aiMock = setupAIMockOverlay({ viewport: element, container: container });
+    btn.addEventListener("click", () => aiMock.toggle());
+    window.__aiMock = aiMock;
+  } catch (e) {
+    console.warn("AI overlay init failed:", e);
+  }
+})();
 
     const toolGroupId = 'tg1';
     const toolGroup = ToolGroupManager.createToolGroup(toolGroupId);
@@ -133,3 +169,4 @@ element?.addEventListener('dragover', (e) => { e.preventDefault(); });
 element?.addEventListener('drop', (e) => { e.preventDefault(); loadFiles(e.dataTransfer.files); });
 
 boot();
+

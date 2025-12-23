@@ -39,7 +39,7 @@
         __setStatus('DOM ready. Importing main module...');
       });
     </script>
-  </head>
+</head>
   <body>
     <header>Radiology AI Viewer <span class="muted">Cornerstone3D stack viewer</span></header>
 
@@ -63,18 +63,7 @@
       <div id="dicomViewport" class="viewport panel"></div>
     </div>
 
-    <script type="module">
-      // This will show a visible error if the module cannot be fetched on GitHub Pages.
-      try {
-        window.__setStatus('JS: importing ./src/main.js ...');
-      } catch {}
-      import('./src/main.js')
-        .then(() => window.__setStatus('JS loaded. Initializing viewer...'))
-        .catch((e) => {
-          console.error(e);
-          const msg = (e && (e.stack || e.message)) ? (e.stack || e.message) : String(e);
-          window.__setStatus('Failed to import main.js:\\n' + msg);
-        });
-    </script>
-  </body>
+    <script type="module" src="/src/main.js"></script>
+</body>
 </html>
+
