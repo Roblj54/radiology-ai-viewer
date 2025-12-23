@@ -59,6 +59,9 @@ async function boot() {
     });
 
     viewport = renderingEngine.getViewport(viewportId);
+;(() => { // __ravExposeViewport_v1
+  try { window.__rav_viewport = element; } catch {}
+})();
 ;(() => {
   try {
     if (window.__aiMock) return;
@@ -69,7 +72,7 @@ async function boot() {
       btn.id = "btnAIMock";
       btn.type = "button";
       btn.textContent = "AI Overlay (mock)";
-      btn.style.cssText = "position:fixed; top:12px; right:12px; z-index:9999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; cursor:pointer;";
+      btn.style.cssText = "position:fixed; top:12px; right:12px; z-index:9999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; color:#111; font-weight:600; cursor:pointer;";
       document.body.appendChild(btn);
     }
 
@@ -182,7 +185,7 @@ boot();
       btn.type = "button";
       btn.textContent = "AI Overlay (mock)";
       btn.style.cssText =
-        "position:fixed; top:12px; right:12px; z-index:999999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; cursor:pointer;";
+        "position:fixed; top:12px; right:12px; z-index:999999; padding:8px 10px; border-radius:10px; border:1px solid #999; background:#fff; color:#111; font-weight:600; cursor:pointer;";
       document.body.appendChild(btn);
     }
     return btn;
@@ -250,3 +253,31 @@ boot();
     start();
   }
 })();
+
+;(() => {
+  // __ravScrollGuard_v1
+  function getViewportContainer() {
+    return (
+      document.getElementById("viewport") ||
+      document.querySelector("[data-viewport]") ||
+      (document.querySelector("canvas") ? document.querySelector("canvas").parentElement : null)
+    );
+  }
+
+  const el = getViewportContainer();
+  if (!el || el.__ravScrollGuardInstalled) return;
+  el.__ravScrollGuardInstalled = true;
+
+  // Capture wheel early. If viewport has 0 imageIds, swallow the wheel so tools do not throw.
+  el.addEventListener("wheel", (ev) => {
+    try {
+      const vp = window.__rav_viewport;
+      const n = (vp && typeof vp.getImageIds === "function") ? vp.getImageIds().length : 0;
+      if (!n) {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+      }
+    } catch {}
+  }, { capture: true, passive: false });
+})();
+
