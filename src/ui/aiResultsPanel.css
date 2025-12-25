@@ -1,0 +1,147 @@
+﻿/* =========================
+   AI Results Panel (Right)
+   ========================= */
+
+.aiResultsDockBtn{
+  border-radius: 10px;
+}
+
+.aiResultsPanel{
+  position: absolute;
+  top: 56px;
+  right: 12px;
+  bottom: 12px;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  z-index: 50;
+
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  background: rgba(10, 14, 22, 0.92);
+  color: #e5e7eb;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+  backdrop-filter: blur(8px);
+}
+
+.aiResultsPanel.is-collapsed{
+  transform: translateX(calc(100% + 16px));
+  pointer-events: none;
+  opacity: 0.0;
+}
+
+.aiResultsHeader{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+
+.aiResultsTitle{
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.aiResultsCount{
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.aiResultsHeaderBtns{
+  display: flex;
+  gap: 8px;
+}
+
+.aiResultsBody{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.aiResultsTools{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.aiResultsSearch,
+.aiResultsFilter{
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  outline: none;
+}
+
+.aiResultsList{
+  overflow: auto;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.aiResultItem{
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.aiResultItem:hover{
+  border-color: rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.08);
+}
+
+.aiResultTop{
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.aiResultLabel{
+  font-weight: 650;
+}
+
+.aiResultMeta{
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 6px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.aiResultBadge{
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  opacity: 0.95;
+}
+
+.aiResultsDockCount{
+  margin-left: 6px;
+  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  opacity: 0.95;
+}

@@ -1,0 +1,565 @@
+﻿/**
+ * Toolbar Controls Pack (updated)
+ * - Results button in toolbar (with count badge)
+ * - Reset View button
+ * - Window/Level Presets dropdown (CT Brain, Soft Tissue, Lung)
+ * - Cine Play controls (Play/Pause + FPS slider + Prev/Next)
+ * - Slice counter "current / total" that updates as you scroll
+ * - Auto-publish AI results by intercepting fetch() JSON responses
+ *
+ * For Reset/Cine/SliceCounter/WL to work reliably:
+ *   window.__CS_RENDERING_ENGINE__ = renderingEngine;
+ *   window.__CS_VIEWPORT_ID__ = viewportId;
+ * Optional (better event-driven slice updates):
+ *   window.__CS_ELEMENT__ = elementUsedToEnableTheViewport;
+ */
+
+function $(sel, root = document){ return root.querySelector(sel); }
+function $all(sel, root = document){ return Array.from(root.querySelectorAll(sel)); }
+
+function safeArray(x){ return Array.isArray(x) ? x : []; }
+function toLower(x){ return String(x ?? "").toLowerCase(); }
+
+function getCornerstoneContext(){
+  return {
+    renderingEngine: window.__CS_RENDERING_ENGINE__ || null,
+    viewportId: window.__CS_VIEWPORT_ID__ || null
+  };
+}
+
+function getViewport(){
+  const ctx = getCornerstoneContext();
+  if (!ctx.renderingEngine || !ctx.viewportId) return null;
+  try{
+    return ctx.renderingEngine.getViewport(ctx.viewportId) || null;
+  }catch(e){
+    return null;
+  }
+}
+
+function getViewportElement(vp){
+  if (vp && vp.element) return vp.element;
+  if (window.__CS_ELEMENT__) return window.__CS_ELEMENT__;
+  return null;
+}
+
+/* -------------------------
+   AI Results badge wiring
+   ------------------------- */
+function setBadgeCount(n){
+  const el = document.getElementById("aiResultsDockCount");
+  if (!el) return;
+  el.textContent = String(Math.max(0, Number(n) || 0));
+}
+
+function installBadgeWiring(){
+  window.addEventListener("ai:results", (e) => {
+    const arr = e && e.detail ? e.detail : [];
+    setBadgeCount(safeArray(arr).length);
+  });
+
+  const t = setInterval(() => {
+    if (window.__AI_RESULTS_WRAPPED__) { clearInterval(t); return; }
+    if (typeof window.setAIResults === "function") {
+      const orig = window.setAIResults;
+      window.setAIResults = (findings) => {
+        const arr = safeArray(findings);
+        setBadgeCount(arr.length);
+        return orig(arr);
+      };
+      window.__AI_RESULTS_WRAPPED__ = true;
+      clearInterval(t);
+    }
+  }, 400);
+}
+
+function toggleResultsPanel(){
+  const panel = document.getElementById("aiResultsPanel");
+  if (!panel) return;
+
+  panel.classList.toggle("is-collapsed");
+  const collapsed = panel.classList.contains("is-collapsed");
+  panel.style.pointerEvents = collapsed ? "none" : "auto";
+  panel.style.opacity = collapsed ? "0" : "1";
+}
+
+/* -------------------------
+   Slice Counter
+   ------------------------- */
+function getStackSize(vp){
+  try{
+    if (vp && typeof vp.getImageIds === "function") {
+      const ids = vp.getImageIds();
+      return safeArray(ids).length;
+    }
+  }catch(e){}
+
+  if (Array.isArray(window.__STACK_IMAGE_IDS__)) return window.__STACK_IMAGE_IDS__.length;
+
+  try{
+    if (vp && typeof vp.getStack === "function") {
+      const st = vp.getStack();
+      if (st && Array.isArray(st.imageIds)) return st.imageIds.length;
+    }
+  }catch(e){}
+
+  return 0;
+}
+
+function getCurrentIndex(vp){
+  try{
+    if (vp && typeof vp.getCurrentImageIdIndex === "function") return Number(vp.getCurrentImageIdIndex()) || 0;
+    if (vp && typeof vp.getImageIdIndex === "function") return Number(vp.getImageIdIndex()) || 0;
+    if (vp && typeof vp.getCurrentImageIndex === "function") return Number(vp.getCurrentImageIndex()) || 0;
+  }catch(e){}
+  return 0;
+}
+
+function formatCounter(cur, total){
+  if (!total || total < 1) return "-- / --";
+  const c = Math.min(Math.max(0, cur), total - 1);
+  return `${c + 1} / ${total}`;
+}
+
+function updateSliceCounter(counterEl){
+  if (!counterEl) return;
+  const vp = getViewport();
+  if (!vp) {
+    if (counterEl.textContent !== "-- / --") counterEl.textContent = "-- / --";
+    return;
+  }
+
+  const total = getStackSize(vp);
+  const cur = getCurrentIndex(vp);
+  const nextText = formatCounter(cur, total);
+
+  if (counterEl.textContent !== nextText) counterEl.textContent = nextText;
+}
+
+function installSliceCounterWiring(counterEl){
+  updateSliceCounter(counterEl);
+
+  if (window.__SLICE_COUNTER_TIMER__) {
+    clearInterval(window.__SLICE_COUNTER_TIMER__);
+  }
+  window.__SLICE_COUNTER_TIMER__ = setInterval(() => updateSliceCounter(counterEl), 200);
+
+  const tryHook = () => {
+    const vp = getViewport();
+    const el = getViewportElement(vp);
+    if (!el || !el.addEventListener) return;
+
+    if (window.__SLICE_COUNTER_EVENTS_HOOKED__) return;
+    window.__SLICE_COUNTER_EVENTS_HOOKED__ = true;
+
+    const events = [
+      "CORNERSTONE_STACK_NEW_IMAGE",
+      "CORNERSTONE_STACK_VIEWPORT_SCROLL",
+      "CORNERSTONE_VIEWPORT_NEW_IMAGE_SET",
+      "CORNERSTONE_IMAGE_RENDERED",
+      "CORNERSTONE_VOLUME_NEW_IMAGE"
+    ];
+
+    events.forEach(evt => {
+      try{
+        el.addEventListener(evt, () => updateSliceCounter(counterEl));
+      }catch(e){}
+    });
+  };
+
+  setTimeout(tryHook, 300);
+  setTimeout(tryHook, 1200);
+
+  document.addEventListener("wheel", () => updateSliceCounter(counterEl), { passive: true });
+  document.addEventListener("keydown", (e) => {
+    const k = String(e.key || "");
+    if (k === "ArrowUp" || k === "ArrowDown" || k === "PageUp" || k === "PageDown") {
+      updateSliceCounter(counterEl);
+    }
+  });
+}
+
+/* -------------------------
+   Reset View
+   ------------------------- */
+function resetView(){
+  const vp = getViewport();
+  if (!vp) {
+    console.warn("[Reset View] Missing viewport. Set window.__CS_RENDERING_ENGINE__ and window.__CS_VIEWPORT_ID__.");
+    return;
+  }
+
+  try{
+    if (typeof vp.resetCamera === "function") vp.resetCamera();
+    if (typeof vp.resetProperties === "function") vp.resetProperties();
+
+    if (typeof vp.setZoom === "function") vp.setZoom(1);
+    if (typeof vp.setPan === "function") vp.setPan({ x: 0, y: 0 });
+
+    if (typeof vp.render === "function") vp.render();
+  }catch(e){
+    console.warn("[Reset View] failed:", e);
+  }
+}
+
+/* -------------------------
+   Window/Level Presets
+   ------------------------- */
+function applyVOIRangeFromWL(ww, wl){
+  const vp = getViewport();
+  if (!vp) {
+    console.warn("[W/L] Missing viewport. Set window.__CS_RENDERING_ENGINE__ and window.__CS_VIEWPORT_ID__.");
+    return;
+  }
+
+  const width = Number(ww);
+  const level = Number(wl);
+  if (!Number.isFinite(width) || !Number.isFinite(level) || width <= 0) return;
+
+  const lower = level - (width / 2);
+  const upper = level + (width / 2);
+
+  try{
+    if (typeof vp.setProperties === "function") {
+      vp.setProperties({ voiRange: { lower, upper } });
+    } else if (typeof vp.setVOI === "function") {
+      // Fallback for some viewport implementations
+      vp.setVOI({ windowWidth: width, windowCenter: level });
+    } else if (typeof vp.setWindowLevel === "function") {
+      vp.setWindowLevel(level, width);
+    }
+    if (typeof vp.render === "function") vp.render();
+  }catch(e){
+    console.warn("[W/L] apply failed:", e);
+  }
+}
+
+function presetToWL(key){
+  // Values are common CT presets (may vary by site and protocol)
+  // brain: WW 80, WL 40
+  // soft tissue / mediastinal: WW 350, WL 40
+  // lung: WW 1500, WL -700
+  if (key === "brain") return { ww: 80, wl: 40 };
+  if (key === "soft")  return { ww: 350, wl: 40 };
+  if (key === "lung")  return { ww: 1500, wl: -700 };
+  return null;
+}
+
+function applyPreset(key){
+  if (key === "default") {
+    resetView();
+    return;
+  }
+  const wl = presetToWL(key);
+  if (!wl) return;
+  applyVOIRangeFromWL(wl.ww, wl.wl);
+}
+
+/* -------------------------
+   Cine controls
+   ------------------------- */
+async function setIndex(vp, idx){
+  if (!vp) return;
+  try{
+    if (typeof vp.setImageIdIndex === "function") {
+      await vp.setImageIdIndex(idx);
+    } else if (typeof vp.setImageIndex === "function") {
+      await vp.setImageIndex(idx);
+    } else if (typeof vp.scroll === "function") {
+      const cur = getCurrentIndex(vp);
+      vp.scroll(idx - cur);
+    }
+    if (typeof vp.render === "function") vp.render();
+  }catch(e){
+    console.warn("[Cine] set index failed:", e);
+  }
+
+  if (window.__SLICE_COUNTER_EL__) updateSliceCounter(window.__SLICE_COUNTER_EL__);
+}
+
+function installCineControls(groupEl){
+  let playing = false;
+  let timer = null;
+
+  const cineBtn = document.createElement("button");
+  cineBtn.className = "btn small";
+  cineBtn.type = "button";
+  cineBtn.textContent = "Cine";
+
+  const stepBack = document.createElement("button");
+  stepBack.className = "btn small";
+  stepBack.type = "button";
+  stepBack.textContent = "Prev";
+
+  const stepFwd = document.createElement("button");
+  stepFwd.className = "btn small";
+  stepFwd.type = "button";
+  stepFwd.textContent = "Next";
+
+  const fpsWrap = document.createElement("span");
+  fpsWrap.className = "cineFps";
+  fpsWrap.innerHTML = `<span class="cineMini">FPS</span>`;
+
+  const slider = document.createElement("input");
+  slider.className = "cineSlider";
+  slider.type = "range";
+  slider.min = "1";
+  slider.max = "30";
+  slider.step = "1";
+  slider.value = "12";
+
+  const fpsVal = document.createElement("span");
+  fpsVal.className = "cineMini";
+  fpsVal.textContent = slider.value;
+
+  fpsWrap.appendChild(slider);
+  fpsWrap.appendChild(fpsVal);
+
+  function stop(){
+    playing = false;
+    cineBtn.textContent = "Cine";
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  async function tick(){
+    const vp = getViewport();
+    if (!vp) { stop(); return; }
+
+    const n = getStackSize(vp);
+    if (!n) { stop(); return; }
+
+    const cur = getCurrentIndex(vp);
+    const next = (cur + 1) % n;
+    await setIndex(vp, next);
+  }
+
+  function start(){
+    const vp = getViewport();
+    if (!vp) { console.warn("[Cine] Missing viewport context."); return; }
+    const n = getStackSize(vp);
+    if (!n) { console.warn("[Cine] No stack loaded."); return; }
+
+    playing = true;
+    cineBtn.textContent = "Pause";
+
+    const fps = Number(slider.value) || 12;
+    const interval = Math.max(20, Math.round(1000 / fps));
+
+    if (timer) clearInterval(timer);
+    timer = setInterval(() => { tick(); }, interval);
+  }
+
+  cineBtn.addEventListener("click", () => {
+    if (playing) stop(); else start();
+  });
+
+  slider.addEventListener("input", () => {
+    fpsVal.textContent = slider.value;
+    if (playing) { stop(); start(); }
+  });
+
+  stepBack.addEventListener("click", async () => {
+    const vp = getViewport();
+    if (!vp) return;
+    const n = getStackSize(vp);
+    if (!n) return;
+    const cur = getCurrentIndex(vp);
+    const next = (cur - 1 + n) % n;
+    await setIndex(vp, next);
+  });
+
+  stepFwd.addEventListener("click", async () => {
+    const vp = getViewport();
+    if (!vp) return;
+    const n = getStackSize(vp);
+    if (!n) return;
+    const cur = getCurrentIndex(vp);
+    const next = (cur + 1) % n;
+    await setIndex(vp, next);
+  });
+
+  groupEl.appendChild(cineBtn);
+  groupEl.appendChild(stepBack);
+  groupEl.appendChild(stepFwd);
+  groupEl.appendChild(fpsWrap);
+}
+
+/* -------------------------
+   AI results auto-wire (fetch interceptor)
+   ------------------------- */
+function normalizeFindings(data){
+  if (Array.isArray(data)) return data.map((d, idx) => normalizeOne(d, idx));
+
+  const root = data && typeof data === "object" ? data : {};
+  const list =
+    root.findings ??
+    root.detections ??
+    root.predictions ??
+    root.results ??
+    root.output ??
+    [];
+
+  return safeArray(list).map((d, idx) => normalizeOne(d, idx));
+}
+
+function normalizeOne(d, idx){
+  const o = d && typeof d === "object" ? d : {};
+  const id = o.id ?? o.uid ?? o.nameId ?? `f${idx + 1}`;
+  const label = o.label ?? o.type ?? o.class ?? o.name ?? "Finding";
+  const score =
+    (typeof o.score === "number") ? o.score :
+    (typeof o.confidence === "number") ? o.confidence :
+    (typeof o.prob === "number") ? o.prob :
+    null;
+
+  const sliceIndex = (o.sliceIndex ?? o.slice ?? o.z ?? o.frame ?? null);
+  const bbox = (o.bbox ?? o.box ?? o.boundingBox ?? null);
+
+  return { id: String(id), label: String(label), score, sliceIndex, bbox };
+}
+
+function publishResults(findings){
+  const arr = safeArray(findings);
+  window.dispatchEvent(new CustomEvent("ai:results", { detail: arr }));
+  if (typeof window.setAIResults === "function") {
+    try{ window.setAIResults(arr); }catch(e){}
+  }
+}
+
+function installFetchInterceptor(){
+  if (window.__AI_FETCH_INTERCEPTOR__) return;
+  window.__AI_FETCH_INTERCEPTOR__ = true;
+
+  const origFetch = window.fetch;
+  if (typeof origFetch !== "function") return;
+
+  window.fetch = async (...args) => {
+    const res = await origFetch(...args);
+
+    try{
+      const ct = (res.headers && res.headers.get) ? (res.headers.get("content-type") || "") : "";
+      if (!ct.toLowerCase().includes("application/json")) return res;
+
+      const clone = res.clone();
+      const data = await clone.json();
+
+      const root = data && typeof data === "object" ? data : null;
+      const hasLikelyKeys = root && (
+        ("findings" in root) ||
+        ("detections" in root) ||
+        ("predictions" in root) ||
+        ("results" in root)
+      );
+
+      if (hasLikelyKeys || Array.isArray(data)) {
+        const findings = normalizeFindings(data);
+        if (findings.length) publishResults(findings);
+      }
+    }catch(e){
+      // ignore
+    }
+
+    return res;
+  };
+}
+
+/* -------------------------
+   Insert toolbar controls
+   ------------------------- */
+function findAIAnalyzeButton(){
+  const buttons = $all("button");
+  return buttons.find(b => toLower(b.textContent).replace(/\s+/g, " ").includes("ai analyze")) || null;
+}
+
+function insertToolbarControls(){
+  const analyzeBtn = findAIAnalyzeButton();
+  if (!analyzeBtn) {
+    console.warn("[Toolbar Controls] Could not find the 'AI Analyze' button. Controls will be added at end of body.");
+  }
+
+  const host = analyzeBtn ? (analyzeBtn.parentElement || document.body) : document.body;
+
+  const group = document.createElement("span");
+  group.className = "toolbarControlsGroup";
+
+  // Results button
+  const resultsBtn = document.createElement("button");
+  resultsBtn.id = "aiResultsDockBtn";
+  resultsBtn.className = "btn small aiResultsDockBtn";
+  resultsBtn.type = "button";
+  resultsBtn.title = "AI Results";
+  resultsBtn.innerHTML = `Results <span id="aiResultsDockCount" class="aiResultsDockCount">0</span>`;
+  resultsBtn.addEventListener("click", () => toggleResultsPanel());
+
+  // Reset View button
+  const resetBtn = document.createElement("button");
+  resetBtn.className = "btn small";
+  resetBtn.type = "button";
+  resetBtn.title = "Reset view (zoom, pan, window level)";
+  resetBtn.textContent = "Reset View";
+  resetBtn.addEventListener("click", () => resetView());
+
+  // Window/Level presets dropdown
+  const wlSelect = document.createElement("select");
+  wlSelect.className = "wlSelect";
+  wlSelect.title = "Window/Level preset";
+  wlSelect.innerHTML = `
+    <option value="default">W/L: Default</option>
+    <option value="brain">CT Brain (80/40)</option>
+    <option value="soft">Soft Tissue (350/40)</option>
+    <option value="lung">Lung (1500/-700)</option>
+  `;
+
+  const saved = (typeof localStorage !== "undefined" && localStorage.getItem)
+    ? (localStorage.getItem("wlPreset") || "default")
+    : "default";
+
+  wlSelect.value = saved;
+
+  wlSelect.addEventListener("change", () => {
+    const key = wlSelect.value || "default";
+    try{
+      if (typeof localStorage !== "undefined" && localStorage.setItem) localStorage.setItem("wlPreset", key);
+    }catch(e){}
+    window.__WL_PRESET__ = key;
+    applyPreset(key);
+  });
+
+  // Slice counter
+  const counterEl = document.createElement("span");
+  counterEl.id = "sliceCounter";
+  counterEl.className = "sliceCounter";
+  counterEl.textContent = "-- / --";
+  window.__SLICE_COUNTER_EL__ = counterEl;
+
+  group.appendChild(resultsBtn);
+  group.appendChild(resetBtn);
+  group.appendChild(wlSelect);
+  group.appendChild(counterEl);
+
+  // Cine controls
+  installCineControls(group);
+
+  if (analyzeBtn && analyzeBtn.parentElement) {
+    analyzeBtn.insertAdjacentElement("afterend", group);
+  } else {
+    host.appendChild(group);
+  }
+
+  installBadgeWiring();
+  installSliceCounterWiring(counterEl);
+
+  // Apply saved preset once after startup (best effort)
+  if (saved && saved !== "default") {
+    setTimeout(() => applyPreset(saved), 350);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  try{
+    insertToolbarControls();
+    installFetchInterceptor();
+  }catch(e){
+    console.warn("[Toolbar Controls] init failed:", e);
+  }
+});

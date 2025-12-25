@@ -1,0 +1,262 @@
+﻿/* =========================
+   Toolbar Controls Pack
+   ========================= */
+
+.toolbarControlsGroup{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.toolbarControlsGroup .btn{
+  white-space: nowrap;
+}
+
+.aiResultsDockCount{
+  margin-left: 6px;
+  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  opacity: 0.95;
+}
+
+.cineWrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cineFps{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.cineSlider{
+  width: 120px;
+}
+
+.cineMini{
+  font-size: 12px;
+  opacity: 0.9;
+  padding: 0 4px;
+}
+
+/* =========================
+   Slice Counter (Toolbar)
+   ========================= */
+.sliceCounter{
+  margin-left: 8px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  opacity: 0.95;
+  user-select: none;
+}
+
+/* =========================
+   Window/Level Presets (Toolbar)
+   ========================= */
+.wlSelect{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  font-size: 12px;
+  outline: none;
+}
+.wlSelect:focus{
+  border-color: rgba(255,255,255,0.26);
+}
+
+/* =========================
+   Window/Level Presets + Sliders (Toolbar)
+   ========================= */
+.wlWrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.wlSelect{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  font-size: 12px;
+  outline: none;
+  max-width: 240px;
+}
+.wlSelect:focus{
+  border-color: rgba(255,255,255,0.26);
+}
+.wlSliders{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.wlSliderWrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+.wlMini{
+  font-size: 12px;
+  opacity: 0.9;
+  padding: 0 2px;
+}
+.wlSlider{
+  width: 120px;
+}
+
+
+/* =========================
+   Transform Controls + Modality Badge (Toolbar)
+   ========================= */
+.modalityBadge{
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  font-size: 12px;
+  opacity: 0.95;
+  user-select: none;
+  margin-left: 6px;
+}
+.btn.is-active{
+  border-color: rgba(255,255,255,0.26);
+  background: rgba(255,255,255,0.10);
+}
+
+/* =========================
+   DICOM HUD + AI Overlay + Series Selector
+   ========================= */
+.dicomHud{
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 50;
+  min-width: 260px;
+  max-width: 360px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(17,24,39,0.72);
+  backdrop-filter: blur(8px);
+  color: #e5e7eb;
+  font-size: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+.dicomHud.is-collapsed .dicomHudBody{ display:none; }
+.dicomHudHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+}
+.dicomHudTitle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.dicomHudToggle{
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  font-size: 12px;
+  cursor:pointer;
+}
+.dicomHudBody{
+  padding: 10px;
+}
+.dicomHudGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 10px;
+  align-items:start;
+}
+.dicomHudField{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width: 0;
+}
+.dicomHudKey{
+  opacity: 0.75;
+  font-size: 11px;
+}
+.dicomHudVal{
+  font-size: 12px;
+  word-break: break-word;
+}
+.dicomHudFindings{
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+.dicomHudFindingsTitle{
+  opacity: 0.85;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.dicomHudFinding{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding: 6px 8px;
+  margin: 4px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  cursor:pointer;
+}
+.dicomHudFinding:hover{
+  border-color: rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.08);
+}
+.dicomHudFindingMeta{
+  opacity: 0.8;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.aiOverlayCanvas{
+  position:absolute;
+  inset:0;
+  z-index: 40;
+  pointer-events: none; /* keep mouse tools working */
+}
+.seriesSelect{
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: #e5e7eb;
+  font-size: 12px;
+  outline: none;
+  max-width: 240px;
+}
+.seriesSelect:focus{
+  border-color: rgba(255,255,255,0.26);
+}
+

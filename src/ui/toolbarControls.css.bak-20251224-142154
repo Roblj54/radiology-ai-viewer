@@ -1,0 +1,48 @@
+﻿/* =========================
+   Toolbar Controls Pack
+   ========================= */
+
+.toolbarControlsGroup{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.toolbarControlsGroup .btn{
+  white-space: nowrap;
+}
+
+.aiResultsDockCount{
+  margin-left: 6px;
+  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  opacity: 0.95;
+}
+
+.cineWrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cineFps{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.cineSlider{
+  width: 120px;
+}
+
+.cineMini{
+  font-size: 12px;
+  opacity: 0.9;
+  padding: 0 4px;
+}
