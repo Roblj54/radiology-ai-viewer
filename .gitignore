@@ -13,3 +13,7 @@ api/.env
 api/node_modules
 api/.env
 
+
+# Local backup files created by patch scripts
+*.bak-*
+src/ui/*.bak-*
