@@ -2,7 +2,7 @@
 import { viteCommonjs } from '@originjs/vite-plugin-commonjs';
 
 export default defineConfig({
-  base: '/radiology-ai-viewer/',base: '/radiology-ai-viewer/',
+    base: '/radiology-ai-viewer/',
   plugins: [viteCommonjs()],
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
@@ -15,6 +15,7 @@ export default defineConfig({
     emptyOutDir: true
   }
 });
+
 
 
 
