@@ -1,4 +1,4 @@
-﻿# Vite: Deploy to GitHub Pages using GitHub Actions
+﻿# Simple workflow for deploying static content to GitHub Pages (Vite)
 name: Deploy static content to Pages
 
 on:
@@ -43,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './dist'
+          path: './docs'
 
       - name: Deploy to GitHub Pages
         id: deployment
