@@ -39,7 +39,8 @@
         __setStatus('DOM ready. Importing main module...');
       });
     </script>
-  <script type="module" crossorigin src="/radiology-ai-viewer/assets/index-CHpb9hOH.js"></script>
+  <script type="module" crossorigin src="/radiology-ai-viewer/assets/index-Clh0oYX_.js"></script>
+  <link rel="stylesheet" crossorigin href="/radiology-ai-viewer/assets/index-PrKcZE8r.css">
 </head>
   <body>
     <header>Radiology AI Viewer <span class="muted">Cornerstone3D stack viewer</span></header>
@@ -64,6 +65,41 @@
       <div id="dicomViewport" class="viewport panel"></div>
     </div>
 
+  <!-- AI Results Panel (floating right) -->
+<aside id="aiResultsPanel" class="aiResultsPanel is-collapsed" aria-label="AI Results">
+    <div class="aiResultsHeader">
+      <div class="aiResultsTitle">
+        <strong>AI Results</strong>
+        <span id="aiResultsCount" class="aiResultsCount">0</span>
+      </div>
+      <div class="aiResultsHeaderBtns">
+        <button id="aiResultsToggleBtn" class="btn small" type="button" title="Toggle results">Toggle</button>
+        <button id="aiResultsClearBtn" class="btn small" type="button" title="Clear results">Clear</button>
+      </div>
+    </div>
+
+    <div class="aiResultsBody">
+      <div class="aiResultsTools">
+        <input id="aiResultsSearch" class="aiResultsSearch" type="search" placeholder="Search (mass, nodule, etc.)" />
+        <select id="aiResultsFilter" class="aiResultsFilter">
+          <option value="all">All</option>
+        </select>
+      </div>
+
+      <div id="aiResultsList" class="aiResultsList"></div>
+    </div>
+  </aside>
+
+
 </body>
 </html>
+
+
+
+
+
+
+
+
+
 
