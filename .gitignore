@@ -17,3 +17,4 @@ api/.env
 # Local backup files created by patch scripts
 *.bak-*
 src/ui/*.bak-*
+

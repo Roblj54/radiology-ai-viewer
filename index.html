@@ -41,6 +41,261 @@
     </script>
   <link rel="stylesheet" href="./src/ui/aiResultsPanel.css" />
   <link rel="stylesheet" href="./src/ui/toolbarControls.css" />
+<!-- __AI_ANALYZE_IN_BROWSER_SHIM__ -->
+<script>
+(() => {
+  // Radiology AI Analyze: TorchXRayVision DenseNet (CheXpert) exported to ONNX, runs fully in-browser.
+  // Intercepts POST requests to any URL containing "/analyze".
+  // Returns "detections" (full-image boxes) so your existing overlay can render labels + scores.
+
+  const origFetch = window.fetch ? window.fetch.bind(window) : null;
+
+  const ORT_WASM_BASE = 'ort/'; // /public/ort
+  const MODEL_URL = 'models/torchxrv_densenet121_res224_chex.onnx'; // /public/models
+
+  const LABELS_18 = [
+    "Enlarged Cardiomediastinum",
+    "Cardiomegaly",
+    "Lung Opacity",
+    "Lung Lesion",
+    "Edema",
+    "Consolidation",
+    "Pneumonia",
+    "Atelectasis",
+    "Pneumothorax",
+    "Pleural Effusion",
+    "Pleural Other",
+    "Fracture",
+    "Support Devices",
+    "", "", "", "", ""
+  ];
+
+  function sigmoid(x) { return 1 / (1 + Math.exp(-x)); }
+
+  function pickViewportCanvas() {
+    const cands = Array.from(document.querySelectorAll('canvas'))
+      .filter(c => c && c.width > 0 && c.height > 0);
+    if (!cands.length) return null;
+    cands.sort((a,b) => (b.width*b.height) - (a.width*a.height));
+    return cands[0];
+  }
+
+  function getReadable2D(canvas) {
+    // Try direct 2D
+    try {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (ctx) return { canvas, ctx };
+    } catch (e) {}
+
+    // Fallback: draw to temp canvas via toDataURL
+    try {
+      const url = canvas.toDataURL('image/png');
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const t = document.createElement('canvas');
+          t.width = img.width; t.height = img.height;
+          const tctx = t.getContext('2d', { willReadFrequently: true });
+          tctx.drawImage(img, 0, 0);
+          resolve({ canvas: t, ctx: tctx });
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function ensureOrtReady() {
+    if (!window.ort) {
+      return { ok: false, error: "window.ort not found. Ensure ort/ort.min.js is loading." };
+    }
+    try {
+      window.ort.env.wasm.wasmPaths = ORT_WASM_BASE;
+      window.ort.env.wasm.numThreads = 1;
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: "Failed to configure ORT wasm paths.", detail: String(e && e.message ? e.message : e) };
+    }
+  }
+
+  async function getSession() {
+    if (window.__AI_ORT_XRV_SESSION) return window.__AI_ORT_XRV_SESSION;
+
+    const r = await fetch(MODEL_URL);
+    if (!r.ok) throw new Error("Model fetch failed: " + r.status + " " + r.statusText);
+
+    const buf = await r.arrayBuffer();
+    const opts = { executionProviders: ['wasm'] };
+    window.__AI_ORT_XRV_SESSION = await window.ort.InferenceSession.create(buf, opts);
+    return window.__AI_ORT_XRV_SESSION;
+  }
+
+  function centerCropToSquare(srcCanvas) {
+    const w = srcCanvas.width, h = srcCanvas.height;
+    const s = Math.min(w, h);
+    const sx = Math.floor((w - s) / 2);
+    const sy = Math.floor((h - s) / 2);
+
+    const out = document.createElement('canvas');
+    out.width = s; out.height = s;
+    const octx = out.getContext('2d', { willReadFrequently: true });
+    octx.drawImage(srcCanvas, sx, sy, s, s, 0, 0, s, s);
+    return out;
+  }
+
+  function buildInputTensorFromCanvas(srcCanvas) {
+    // TorchXRayVision preprocessing (as used in their examples):
+    // - normalize 8-bit image to [-1024, 1024]
+    // - single channel
+    // - center crop to square then resize to 224
+    // Reference: TorchXRayVision getting started snippet.
+    const W = 224, H = 224;
+
+    const sq = centerCropToSquare(srcCanvas);
+
+    const tmp = document.createElement('canvas');
+    tmp.width = W; tmp.height = H;
+    const tctx = tmp.getContext('2d', { willReadFrequently: true });
+    tctx.drawImage(sq, 0, 0, W, H);
+
+    const rgba = tctx.getImageData(0, 0, W, H).data;
+    const out = new Float32Array(1 * 1 * H * W);
+
+    for (let i = 0, p = 0; i < rgba.length; i += 4, p++) {
+      // grayscale from displayed pixels
+      const g = (rgba[i] + rgba[i+1] + rgba[i+2]) / 3;
+
+      // map 0..255 to [-1024..1024]
+      const v = (g / 255.0) * 2048.0 - 1024.0;
+
+      out[p] = v;
+    }
+
+    return new window.ort.Tensor('float32', out, [1, 1, H, W]);
+  }
+
+  function decodeMultiLabel(logits, threshold, topK) {
+    const rows = [];
+    for (let i = 0; i < 18; i++) {
+      const label = LABELS_18[i] || "";
+      if (!label) continue;
+      const prob = sigmoid(logits[i]);
+      rows.push({ label, prob });
+    }
+    rows.sort((a,b) => b.prob - a.prob);
+
+    const kept = rows.filter(x => x.prob >= threshold).slice(0, topK);
+
+    // Convert to overlay-friendly detections: full-image boxes with label + score
+    const detections = kept.map(x => ({
+      label: x.label,
+      score: +x.prob.toFixed(3),
+      bbox: { x: 0, y: 0, w: 1, h: 1 }
+    }));
+
+    // Also return full classification map
+    const classifications = {};
+    for (const r of rows) classifications[r.label] = +r.prob.toFixed(4);
+
+    return { detections, classifications, debug: { total: rows.length, kept: kept.length } };
+  }
+
+  async function analyzeFromViewport() {
+    const canvas = pickViewportCanvas();
+    if (!canvas) return { ok: false, error: "No canvas found. Viewer not ready yet." };
+
+    const ortReady = await ensureOrtReady();
+    if (!ortReady.ok) return ortReady;
+
+    let session;
+    try {
+      session = await getSession();
+    } catch (e) {
+      return { ok: false, error: "Failed to create ORT session.", detail: String(e && e.message ? e.message : e) };
+    }
+
+    let readable = getReadable2D(canvas);
+    if (readable && typeof readable.then === "function") readable = await readable;
+
+    if (!readable || !readable.canvas) {
+      return { ok: false, error: "Canvas pixels are not readable (security or WebGL). Try a different rendering mode.", detail: "" };
+    }
+
+    let inputTensor;
+    try {
+      inputTensor = buildInputTensorFromCanvas(readable.canvas);
+    } catch (e) {
+      return { ok: false, error: "Failed to build input tensor.", detail: String(e && e.message ? e.message : e) };
+    }
+
+    // Use the model's real input name if available, else "input"
+    const inName = (session.inputNames && session.inputNames.length) ? session.inputNames[0] : "input";
+    const feeds = {};
+    feeds[inName] = inputTensor;
+
+    let outputs;
+    try {
+      outputs = await session.run(feeds);
+    } catch (e) {
+      return { ok: false, error: "Model inference failed.", detail: String(e && e.message ? e.message : e) };
+    }
+
+    const outName = (session.outputNames && session.outputNames.length) ? session.outputNames[0] : Object.keys(outputs)[0];
+    const outT = outputs[outName] || outputs[Object.keys(outputs)[0]];
+    if (!outT || !outT.data || outT.data.length < 18) {
+      return { ok: false, error: "Unexpected output tensor.", detail: "Keys: " + Object.keys(outputs).join(", ") };
+    }
+
+    const decoded = decodeMultiLabel(outT.data, 0.35, 6);
+
+    return {
+      ok: true,
+      mode: "in-browser-onnx-torchxrayvision-densenet121-chex",
+      detections: decoded.detections,
+      classifications: decoded.classifications,
+      debug: {
+        canvasW: canvas.width,
+        canvasH: canvas.height,
+        modelUrl: MODEL_URL,
+        ortWasmBase: ORT_WASM_BASE,
+        inputName: inName,
+        outputName: outName,
+        decode: decoded.debug,
+        note: "Multi-label classifier. Boxes are full-image so existing overlay can display labels and scores."
+      }
+    };
+  }
+
+  if (origFetch) {
+    window.fetch = async function(input, init) {
+      try {
+        const url = (typeof input === 'string') ? input : (input && input.url) ? input.url : '';
+        const method = (((init && init.method) || (typeof input !== 'string' && input && input.method) || 'GET') + '').toUpperCase();
+
+        if (url && url.indexOf('/analyze') !== -1 && method === 'POST') {
+          const payload = await analyzeFromViewport();
+          const body = JSON.stringify(payload);
+          return new Response(body, {
+            status: payload.ok ? 200 : 500,
+            headers: { 'Content-Type': 'application/json; charset=utf-8' }
+          });
+        }
+      } catch (e) {
+        // fall through
+      }
+      return origFetch(input, init);
+    };
+
+    console.log("[AI Shim] Enabled TorchXRayVision CheXpert ONNX in-browser /analyze interception.");
+  } else {
+    console.warn("[AI Shim] window.fetch not found. If the app uses axios/XHR, the shim must be adapted.");
+  }
+})();
+</script>
+<!-- /__AI_ANALYZE_IN_BROWSER_SHIM__ -->
+<script src="ort/ort.min.js"></script>
 </head>
   <body>
     <header>Radiology AI Viewer <span class="muted">Cornerstone3D stack viewer</span></header>
@@ -96,6 +351,9 @@
   <script type="module" src="./src/ui/toolbarControls.js"></script>
 </body>
 </html>
+
+
+
 
 
 

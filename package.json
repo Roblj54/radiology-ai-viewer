@@ -16,6 +16,7 @@
         "@cornerstonejs/core": "^4.14.4",
         "@cornerstonejs/dicom-image-loader": "^4.14.4",
         "@cornerstonejs/tools": "^4.14.4",
-        "dicom-parser": "^1.8.21"
+        "dicom-parser": "^1.8.21",
+        "onnxruntime-web": "^1.23.2"
     }
 }
