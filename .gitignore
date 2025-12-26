@@ -20,3 +20,16 @@ src/ui/*.bak-*
 
 
 
+# Python
+.venv-xrv-onnx/
+.venv/
+venv/
+__pycache__/
+*.pyc
+# Do not commit raw torch checkpoints (site only needs .onnx)
+public/models/*.pt
+public/models/*.pth
+# Local artifacts
+*.bak
+ai-stub.log
+ai_backend/
