@@ -35,3 +35,7 @@ ai-stub.log
 ai_backend/
 *.bak.*
 *.log
+# Local backups created by scripts
+reset_backup_*
+legacy_moved_by_reset*
+*.bak_*
