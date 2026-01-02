@@ -1,0 +1,5 @@
+﻿# Default: keep LF in repo for cross-platform consistency
+* text=auto eol=lf
+
+# PowerShell scripts can stay CRLF on Windows
+*.ps1 text eol=crlf

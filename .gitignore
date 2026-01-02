@@ -1,0 +1,41 @@
+﻿node_modules/
+dist/
+.vite/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+
+api/node_modules
+api/.env
+
+
+api/node_modules
+api/.env
+
+
+# Local backup files created by patch scripts
+*.bak-*
+src/ui/*.bak-*
+
+
+
+# Python
+.venv-xrv-onnx/
+.venv/
+venv/
+__pycache__/
+*.pyc
+# Do not commit raw torch checkpoints (site only needs .onnx)
+public/models/*.pt
+public/models/*.pth
+# Local artifacts
+*.bak
+ai-stub.log
+ai_backend/
+*.bak.*
+*.log
+# Local backups created by scripts
+reset_backup_*
+legacy_moved_by_reset*
+*.bak_*
