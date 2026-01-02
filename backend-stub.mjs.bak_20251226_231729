@@ -1,0 +1,176 @@
+﻿import http from "node:http";
+import crypto from "node:crypto";
+import { PNG } from "pngjs";
+
+const HOST = "127.0.0.1";
+const PORT = 8787;
+
+function corsHeaders(req) {
+  const reqHdrs = req.headers["access-control-request-headers"];
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": reqHdrs ? String(reqHdrs) : "Content-Type, Authorization",
+  };
+}
+
+function json(req, res, status, obj) {
+  res.writeHead(status, { "Content-Type": "application/json", ...corsHeaders(req) });
+  res.end(JSON.stringify(obj));
+}
+
+function readBodyBuffer(req) {
+  return new Promise((resolve) => {
+    const chunks = [];
+    req.on("data", (c) => chunks.push(c));
+    req.on("end", () => resolve(Buffer.concat(chunks)));
+  });
+}
+
+let dicomParserCached = null;
+async function getDicomParser() {
+  if (dicomParserCached) return dicomParserCached;
+  const m = await import("dicom-parser");
+  dicomParserCached = m.default ?? m;
+  return dicomParserCached;
+}
+
+function safeStr(ds, tag) { try { return ds.string(tag) ?? null; } catch { return null; } }
+function safeU16(ds, tag) { try { const v = ds.uint16(tag); return (v === undefined ? null : v); } catch { return null; } }
+function safeI32Str(ds, tag) { try { const v = ds.intString(tag); return (v === undefined ? null : v); } catch { return null; } }
+
+function computePngStats(buf) {
+  const png = PNG.sync.read(buf);
+  const { width, height, data } = png; // RGBA
+  let n = 0;
+  let sum = 0;
+  let sum2 = 0;
+  let min = 255;
+  let max = 0;
+
+  for (let i = 0; i < data.length; i += 4) {
+    // Luma from RGB (works for grayscale too)
+    const r = data[i], g = data[i+1], b = data[i+2];
+    const v = Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b);
+    if (v < min) min = v;
+    if (v > max) max = v;
+    sum += v;
+    sum2 += v * v;
+    n++;
+  }
+  const mean = sum / Math.max(1, n);
+  const variance = (sum2 / Math.max(1, n)) - (mean * mean);
+  const std = Math.sqrt(Math.max(0, variance));
+
+  // Simple quality flags (not medical)
+  const dynamicRange = max - min;
+  const flags = [];
+  if (dynamicRange < 25) flags.push("low_contrast");
+  if (std < 10) flags.push("low_variance");
+  if (mean < 40) flags.push("dark");
+  if (mean > 215) flags.push("bright");
+
+  return { width, height, min, max, mean: +mean.toFixed(2), std: +std.toFixed(2), dynamicRange, flags };
+}
+
+const server = http.createServer(async (req, res) => {
+  const method = req.method || "GET";
+  const rawUrl = req.url || "/";
+  const pathOnly = rawUrl.split("?")[0];
+
+  // Accept both /analyze and /api/analyze
+  const path = pathOnly.startsWith("/api/") ? pathOnly.slice(4) : pathOnly;
+
+  if (method === "OPTIONS") {
+    res.writeHead(204, corsHeaders(req));
+    res.end();
+    return;
+  }
+
+  if (method === "GET" && path === "/health") {
+    json(req, res, 200, { ok: true, service: "radiology-ai-backend", mode: "dev" });
+    return;
+  }
+
+  const isAi =
+    path === "/analyze" || path === "/predict" || path === "/infer" || path === "/ai" || path === "/v1/analyze";
+
+  if ((method === "POST" || method === "GET") && isAi) {
+    const ct = (req.headers["content-type"] || "").toLowerCase();
+
+    if (method === "POST") {
+      const buf = await readBodyBuffer(req);
+      const sha16 = crypto.createHash("sha256").update(buf).digest("hex").slice(0, 16);
+
+      // DICOM metadata diagnostics
+      if (ct.includes("application/dicom") || (ct.includes("application/octet-stream") && buf.length > 132 && buf.subarray(128, 132).toString("ascii") === "DICM")) {
+        try {
+          const dicomParser = await getDicomParser();
+          const byteArray = new Uint8Array(buf);
+          const ds = dicomParser.parseDicom(byteArray);
+
+          json(req, res, 200, {
+            ok: true,
+            kind: "dicom-metadata",
+            receivedBytes: buf.length,
+            sha256_16: sha16,
+            dicom: {
+              modality: safeStr(ds, "x00080060"),
+              sopClass: safeStr(ds, "x00080016"),
+              studyUID: safeStr(ds, "x0020000d"),
+              seriesUID: safeStr(ds, "x0020000e"),
+              seriesDesc: safeStr(ds, "x0008103e"),
+              instanceNumber: safeI32Str(ds, "x00200013"),
+              rows: safeU16(ds, "x00280010"),
+              cols: safeU16(ds, "x00280011"),
+              bitsAllocated: safeU16(ds, "x00280100"),
+              bitsStored: safeU16(ds, "x00280101"),
+              photometric: safeStr(ds, "x00280004"),
+              transferSyntax: safeStr(ds, "x00020010"),
+              pixelSpacing: safeStr(ds, "x00280030"),
+              sliceThickness: safeStr(ds, "x00180050"),
+            }
+          });
+          return;
+        } catch (e) {
+          json(req, res, 400, { ok: false, error: "Failed to parse DICOM", sha256_16: sha16, detail: String(e) });
+          return;
+        }
+      }
+
+      // PNG slice stats (frontend sends canvas as PNG)
+      if (ct.includes("image/png") || (ct.includes("application/octet-stream") && buf.length > 8 && buf.readUInt32BE(0) === 0x89504e47)) {
+        try {
+          const stats = computePngStats(buf);
+          json(req, res, 200, { ok: true, kind: "png-stats", receivedBytes: buf.length, sha256_16: sha16, stats });
+          return;
+        } catch (e) {
+          json(req, res, 400, { ok: false, error: "Failed to parse PNG", sha256_16: sha16, detail: String(e) });
+          return;
+        }
+      }
+    }
+
+    // Default demo detections for overlay pipeline testing
+    const dets = [
+      { label: "Nodule", score: 0.87, box: { x: 0.32, y: 0.30, w: 0.28, h: 0.20 } },
+      { label: "Mass",   score: 0.73, box: { x: 0.70, y: 0.22, w: 0.22, h: 0.16 } },
+    ];
+
+    json(req, res, 200, {
+      ok: true,
+      kind: "demo-detections",
+      message: "Demo overlay response. Send application/dicom for DICOM metadata or image/png for slice stats.",
+      detections: dets,
+      results: dets.map(d => ({ label: d.label, score: d.score, bbox: [d.box.x, d.box.y, d.box.x + d.box.w, d.box.y + d.box.h] })),
+      boxes: dets.map(d => ({ ...d.box, label: d.label, score: d.score })),
+    });
+    return;
+  }
+
+  json(req, res, 404, { ok: false, error: "Not Found", method, path });
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`Backend listening on http://${HOST}:${PORT}`);
+});

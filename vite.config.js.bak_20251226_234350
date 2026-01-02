@@ -1,0 +1,33 @@
+﻿import dns from "node:dns";
+import { defineConfig } from "vite";
+import { viteCommonjs } from "@originjs/vite-plugin-commonjs";
+
+dns.setDefaultResultOrder("verbatim");
+
+const apiTarget = "http://127.0.0.1:8787";
+
+export default defineConfig(({ command }) => {
+  const isBuild = command === "build";
+  return {
+    base: isBuild ? "/radiology-ai-viewer/" : "/",
+    plugins: [viteCommonjs()],
+    optimizeDeps: {
+      exclude: ["@cornerstonejs/dicom-image-loader"],
+      include: ["dicom-parser"],
+      force: true,
+    },
+    worker: { format: "es" },
+    server: {
+      host: "127.0.0.1",
+      port: 5173,
+      strictPort: true,
+      proxy: {
+        "/api":     { target: apiTarget, changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, "") },
+        "/health":  { target: apiTarget, changeOrigin: true },
+        "/analyze": { target: apiTarget, changeOrigin: true },
+        "/predict": { target: apiTarget, changeOrigin: true },
+        "/infer":   { target: apiTarget, changeOrigin: true },
+      },
+    },
+  };
+});

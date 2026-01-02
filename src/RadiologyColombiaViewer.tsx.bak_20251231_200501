@@ -1,0 +1,207 @@
+﻿import React, { useCallback, useRef, useState } from 'react';
+import {
+  displayImageWithViewport,
+  getCurrentImageCount,
+  loadDicomFiles,
+  ViewerViewport,
+} from './dicomLoader';
+
+const makeDefaultViewport = (): ViewerViewport => ({
+  index: 0,
+  imageId: 'dicomfile:0',
+  invert: false,
+  hflip: false,
+  vflip: false,
+  rotation: 0,
+  windowCenter: null,
+  windowWidth: null,
+});
+
+const RadiologyColombiaViewer: React.FC = () => {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+
+  const [seriesLoaded, setSeriesLoaded] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [totalSlices, setTotalSlices] = useState(0);
+  const [viewportState, setViewportState] = useState<ViewerViewport>(makeDefaultViewport());
+  const [errorText, setErrorText] = useState<string>('');
+
+  const applyViewport = useCallback(
+    async (next: ViewerViewport) => {
+      const element = viewportRef.current;
+      if (!element) return;
+
+      try {
+        console.log('[updateViewport]', next);
+        await displayImageWithViewport(element, next.index, next);
+      } catch (err: any) {
+        console.error('display error', err);
+        setErrorText(err?.message ? String(err.message) : String(err));
+      }
+    },
+    [],
+  );
+
+  const handleFilesChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    setErrorText('');
+    const files = event.target.files;
+    const fileArray = files ? Array.from(files) : [];
+    // Reset value so picking the same folder again still triggers change
+    event.target.value = '';
+
+    if (!fileArray.length) return;
+
+    console.log('[files] selected', files.length);
+
+    try {
+      const imageIds = await loadDicomFiles(fileArray);
+      const count = imageIds.length;
+
+      const firstState: ViewerViewport = {
+        index: 0,
+        imageId: imageIds[0] ?? 'dicomfile:0',
+        invert: false,
+        hflip: false,
+        vflip: false,
+        rotation: 0,
+        windowCenter: null,
+        windowWidth: null,
+      };
+
+      setSeriesLoaded(true);
+      setTotalSlices(count);
+      setCurrentIndex(0);
+      setViewportState(firstState);
+
+      await applyViewport(firstState);
+    } catch (err: any) {
+      console.error('Error loading DICOM files', err);
+      setErrorText(err?.message ? String(err.message) : String(err));
+    }
+  };
+
+  const goToSlice = async (index: number) => {
+    const count = getCurrentImageCount();
+    if (!count) return;
+
+    const safeIndex = Math.max(0, Math.min(index, count - 1));
+    const next: ViewerViewport = { ...viewportState, index: safeIndex };
+
+    setCurrentIndex(safeIndex);
+    setViewportState(next);
+    await applyViewport(next);
+  };
+
+  const handleSliceSlider = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    await goToSlice(value);
+  };
+
+  const handleToolbarAction = async (action: string) => {
+    if (!seriesLoaded) return;
+
+    let next: ViewerViewport = viewportState;
+
+    switch (action) {
+      case 'invert':
+        next = { ...viewportState, invert: !viewportState.invert };
+        break;
+      case 'flipH':
+        next = { ...viewportState, hflip: !viewportState.hflip };
+        break;
+      case 'flipV':
+        next = { ...viewportState, vflip: !viewportState.vflip };
+        break;
+      case 'rotate':
+        next = { ...viewportState, rotation: ((viewportState.rotation ?? 0) + 90) % 360 };
+        break;
+      case 'soft':
+        next = { ...viewportState, windowCenter: 40, windowWidth: 400 };
+        break;
+      case 'lung':
+        next = { ...viewportState, windowCenter: -600, windowWidth: 1500 };
+        break;
+      case 'bone':
+        next = { ...viewportState, windowCenter: 350, windowWidth: 2500 };
+        break;
+      default:
+        return;
+    }
+
+    next = { ...next, index: currentIndex };
+    setViewportState(next);
+    await applyViewport(next);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#020617', color: '#e5e7eb', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px' }}>
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 600 }}>Radiology AI Colombia Health</h1>
+          <span style={{ fontSize: '12px', opacity: 0.8 }}>ES / EN</span>
+        </header>
+
+        {errorText && (
+          <div style={{ border: '1px solid #ef4444', background: '#111827', padding: '10px', borderRadius: '8px', marginBottom: '12px', fontSize: '12px' }}>
+            <strong style={{ color: '#ef4444' }}>Load error:</strong> {errorText}
+          </div>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '16px' }}>
+          <div>
+            <div style={{ borderRadius: '8px', border: '1px solid #1f2937', padding: '12px', marginBottom: '16px', background: '#020617' }}>
+              <p style={{ fontSize: '12px', marginBottom: '8px' }}>Upload DICOM</p>
+              <label style={{ display: 'inline-block', fontSize: '12px', padding: '8px 12px', borderRadius: '999px', border: '1px solid #22c55e', cursor: 'pointer' }}>
+                Select DICOM files
+                <input type="file" multiple accept=".dcm,application/dicom" style={{ display: 'none' }} onChange={handleFilesChange} />
+              </label>
+
+              <p style={{ fontSize: '11px', marginTop: '8px', opacity: 0.8 }}>
+                {seriesLoaded ? ('Loaded series with ' + totalSlices + ' slices.') : 'No series loaded yet.'}
+              </p>
+            </div>
+
+            <div style={{ borderRadius: '8px', border: '1px solid #1f2937', padding: '12px', background: '#020617' }}>
+              <p style={{ fontSize: '12px', marginBottom: '4px' }}>Study list (demo)</p>
+              <p style={{ fontSize: '11px', opacity: 0.7 }}>Patient 001  CT Chest</p>
+            </div>
+          </div>
+
+          <div style={{ borderRadius: '12px', border: '1px solid #1f2937', background: '#020617', padding: '12px' }}>
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+              <button onClick={() => handleToolbarAction('invert')}>Invert</button>
+              <button onClick={() => handleToolbarAction('rotate')}>Rotate 90</button>
+              <button onClick={() => handleToolbarAction('flipH')}>Flip H</button>
+              <button onClick={() => handleToolbarAction('flipV')}>Flip V</button>
+              <button onClick={() => handleToolbarAction('soft')}>Soft tissue</button>
+              <button onClick={() => handleToolbarAction('lung')}>Lung</button>
+              <button onClick={() => handleToolbarAction('bone')}>Bone</button>
+            </div>
+
+            <div ref={viewportRef} style={{ background: '#020617', borderRadius: '8px', border: '1px solid #111827', height: '420px' }} />
+
+            <div style={{ marginTop: '12px' }}>
+              <input
+                type="range"
+                min={0}
+                max={Math.max(0, totalSlices - 1)}
+                value={currentIndex}
+                disabled={!seriesLoaded}
+                onChange={handleSliceSlider}
+                style={{ width: '100%' }}
+              />
+              <div style={{ fontSize: '11px', marginTop: '4px', opacity: 0.8 }}>
+                Slice {seriesLoaded ? currentIndex + 1 : 0} / {totalSlices}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RadiologyColombiaViewer;
+
+
+

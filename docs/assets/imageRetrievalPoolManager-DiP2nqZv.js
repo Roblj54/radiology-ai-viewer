@@ -1,1 +1,0 @@
-import{d8 as t,ci as a}from"./index-Cp4iUYqv.js";const e=new t("imageRetrievalPool");e.setMaxSimultaneousRequests(a.Interaction,200);e.setMaxSimultaneousRequests(a.Thumbnail,200);e.setMaxSimultaneousRequests(a.Prefetch,200);e.grabDelay=0;export{e as i};

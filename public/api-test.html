@@ -1,0 +1,29 @@
+﻿<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Radiology AI Viewer - API Test</title></head>
+<body style="font-family:system-ui;padding:16px">
+  <h2>Radiology AI Viewer - API Test</h2>
+  <p>Base URL: <input id="base" value="/api" style="width:340px"/></p>
+  <button id="h">Test /health</button>
+  <button id="a">Test /analyze (json)</button>
+  <pre id="out" style="background:#111;color:#0f0;padding:12px;border-radius:8px;white-space:pre-wrap"></pre>
+
+<script>
+const out = (x) => document.getElementById('out').textContent = x;
+const base = () => document.getElementById('base').value.replace(/\/+$/,'');
+async function hit(path, opts){
+  const url = base() + path;
+  out("Request: " + url + "\n\n...");
+  const r = await fetch(url, opts);
+  const t = await r.text();
+  out("Status: " + r.status + "\n\n" + t);
+}
+document.getElementById('h').onclick = () => hit("/health");
+document.getElementById('a').onclick = () => hit("/analyze", {
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body: JSON.stringify({ ping:true })
+});
+</script>
+</body>
+</html>

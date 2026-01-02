@@ -1,4 +1,47 @@
-﻿function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+﻿/* AI_API_LOCALHOST_TO_127001_MIGRATE */
+(() => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const fromFull = 'http://127.0.0.1:8787';
+    const toFull   = 'http://127.0.0.1:8787';
+    const fromHost = '127.0.0.1:8787';
+    const toHost   = '127.0.0.1:8787';
+
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+
+    for (const k of keys) {
+      const v = localStorage.getItem(k);
+      if (typeof v === 'string' && (v.includes(fromFull) || v.includes(fromHost))) {
+        const nv = v.split(fromFull).join(toFull).split(fromHost).join(toHost);
+        if (nv !== v) localStorage.setItem(k, nv);
+      }
+    }
+  } catch (e) {}
+})();
+
+;/* AUTO-FIX: normalize localhost API URL */
+(function normalizeAiApiUrl(){
+  try {
+    var fromFull = 'http://127.0.0.1:8787';
+    var toFull   = 'http://127.0.0.1:8787';
+    var fromHost = '127.0.0.1:8787';
+    var toHost   = '127.0.0.1:8787';
+
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+    for (var j = 0; j < keys.length; j++) {
+      var k = keys[j];
+      var v = localStorage.getItem(k);
+      if (typeof v === 'string' && v.indexOf(fromHost) >= 0) {
+        var nv = v.split(fromFull).join(toFull).split(fromHost).join(toHost);
+        if (nv !== v) localStorage.setItem(k, nv);
+      }
+    }
+  } catch (e) { /* ignore */ }
+})();
+
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
 function getApiBase() {
   const qs = new URLSearchParams(location.search);
@@ -12,7 +55,7 @@ function getApiBase() {
   const fromLS = localStorage.getItem("AI_API_BASE");
   if (fromLS) return fromLS;
 
-  return "http://localhost:8787";
+  return "http://127.0.0.1:8787";
 }
 
 function setApiBase(v) {
@@ -175,3 +218,7 @@ function ensurePanel() {
 export function installAIServerPanel() {
   ensurePanel();
 }
+
+
+
+

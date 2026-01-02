@@ -33,3 +33,5 @@ public/models/*.pth
 *.bak
 ai-stub.log
 ai_backend/
+*.bak.*
+*.log

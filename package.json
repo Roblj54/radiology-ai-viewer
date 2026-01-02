@@ -13,10 +13,17 @@
         "vite": "^7.3.0"
     },
     "dependencies": {
-        "@cornerstonejs/core": "^4.14.4",
-        "@cornerstonejs/dicom-image-loader": "^4.14.4",
-        "@cornerstonejs/tools": "^4.14.4",
+        "@cornerstonejs/core": "^0.3.0",
+        "@cornerstonejs/dicom-image-loader": "^0.1.5",
+        "@cornerstonejs/tools": "^0.5.0",
+        "@types/react": "^19.2.7",
+        "@types/react-dom": "^19.2.3",
+        "cornerstone-core": "^2.6.1",
+        "cornerstone-wado-image-loader": "^4.13.2",
         "dicom-parser": "^1.8.21",
-        "onnxruntime-web": "^1.23.2"
+        "onnxruntime-web": "^1.23.2",
+        "pngjs": "^7.0.0",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3"
     }
 }

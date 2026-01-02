@@ -1,51 +1,48 @@
-﻿import express from "express";
-import cors from "cors";
+﻿const express = require('express');
+const cors = require('cors');
 
 const app = express();
+const PORT = process.env.PORT || 8787;
 
-// Comma-separated list, example:
-// ALLOWED_ORIGINS=https://roblj54.github.io,http://localhost:5173
-const allowed = (process.env.ALLOWED_ORIGINS || "*")
-  .split(",")
-  .map(s => s.trim())
-  .filter(Boolean);
+// Allow the Vite dev server origin. Add more origins if needed.
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+];
 
+// Enable CORS (handles preflight too)
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // curl/postman
-    if (allowed.includes("*")) return cb(null, true);
-    return cb(null, allowed.includes(origin));
-  }
+  origin: function (origin, cb) {
+    if (!origin) return cb(null, true); // allow tools like curl/postman
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error('CORS blocked for origin: ' + origin));
+  },
+  methods: ['GET','POST','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
 
-app.use(express.json({ limit: "25mb" }));
+app.use(express.json({ limit: '50mb' }));
 
-app.get("/health", (req, res) => res.json({ ok: true }));
-
-// POST /analyze
-// body: { image: "data:image/png;base64,...", meta?: {...} }
-// returns: { boxes: [{x,y,w,h,label,score}] } coords are normalized 0..1
-app.post("/analyze", async (req, res) => {
-  try {
-    const { image } = req.body || {};
-    if (!image || typeof image !== "string" || !image.startsWith("data:image/")) {
-      return res.status(400).json({ error: "Missing or invalid 'image' data URL." });
-    }
-
-    // TODO: replace with your real AI call
-    const boxes = [
-      { x: 0.58, y: 0.22, w: 0.22, h: 0.18, label: "Finding A (mock)", score: 0.88 },
-      { x: 0.30, y: 0.55, w: 0.18, h: 0.14, label: "Finding B (mock)", score: 0.73 }
-    ];
-
-    return res.json({ boxes });
-  } catch (e) {
-    return res.status(500).json({ error: String(e?.message || e) });
-  }
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'radiology-ai-viewer-api', port: PORT });
 });
 
-const port = Number(process.env.PORT || 8787);
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-  console.log(`ALLOWED_ORIGINS=${process.env.ALLOWED_ORIGINS || "*"}`);
+// Accept several common paths so your UI will hit one of them
+const handlers = ['/analyze','/api/analyze','/predict','/api/predict'];
+
+app.post(handlers, (req, res) => {
+  // Stub response that proves connectivity + CORS. Replace with real inference later.
+  res.json({
+    ok: true,
+    note: 'Stub API response (replace with real model inference later)',
+    receivedKeys: req.body ? Object.keys(req.body) : [],
+    results: [
+      { label: 'API connectivity', score: 1.0 }
+    ]
+  });
+});
+
+app.listen(PORT, () => {
+  console.log('AI API listening on http://localhost:' + PORT);
+  console.log('Health: http://localhost:' + PORT + '/health');
 });

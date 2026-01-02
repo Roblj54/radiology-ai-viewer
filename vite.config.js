@@ -1,21 +1,25 @@
 ﻿import { defineConfig } from 'vite';
-import { viteCommonjs } from '@originjs/vite-plugin-commonjs';
 
-export default defineConfig({
-    base: '/radiology-ai-viewer/',
-  plugins: [viteCommonjs()],
-  assetsInclude: ['**/*.wasm'],
-  optimizeDeps: {
-    exclude: ['@cornerstonejs/dicom-image-loader'],
-    include: ['dicom-parser']
+export default defineConfig(({ command }) => ({
+  // Dev at /, build for GitHub Pages at /radiology-ai-viewer/
+  base: command === 'build' ? '/radiology-ai-viewer/' : '/',
+
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    strictPort: true,
   },
-  worker: { format: 'es' },
+
+  // Critical: only scan the real entry, not docs/, backups/, legacy copies
+  optimizeDeps: {
+    entries: ['index.html'],
+  },
+
   build: {
     outDir: 'docs',
-    emptyOutDir: true
-  }
-});
-
-
-
-
+    emptyOutDir: true,
+    rollupOptions: {
+      input: 'index.html',
+    },
+  },
+}));

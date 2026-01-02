@@ -1,0 +1,127 @@
+﻿import * as cornerstone from 'cornerstone-core';
+import dicomParser from 'dicom-parser';
+import * as cornerstoneWADOImageLoader from 'cornerstone-wado-image-loader';
+
+export type ViewerViewport = {
+  invert?: boolean;
+  hflip?: boolean;
+  vflip?: boolean;
+  rotation?: number;
+  windowCenter?: number;
+  windowWidth?: number;
+};
+
+let initialized = false;
+let currentImageIds: string[] = [];
+
+function ensureInitialized() {
+  if (initialized) return;
+
+  // IMPORTANT:
+  // Do NOT do: cornerstoneWADOImageLoader.external = {...}
+  // Some builds expose external via getter-only, so reassignment throws.
+  (cornerstoneWADOImageLoader as any).external.cornerstone = cornerstone;
+  (cornerstoneWADOImageLoader as any).external.dicomParser = dicomParser;
+
+  // Keep it simple: no web workers (avoids CSP/eval headaches during dev)
+  if (typeof (cornerstoneWADOImageLoader as any).configure === 'function') {
+    (cornerstoneWADOImageLoader as any).configure({ useWebWorkers: false });
+  }
+
+  initialized = true;
+}
+
+function safeGetEnabledElement(el: HTMLElement): any | null {
+  const cs: any = cornerstone as any;
+  try {
+    if (typeof cs.getEnabledElement === 'function') return cs.getEnabledElement(el);
+  } catch {
+    // Some versions throw "element not enabled"
+  }
+  return null;
+}
+
+function safeGetViewport(el: HTMLElement): any | null {
+  const cs: any = cornerstone as any;
+  try {
+    if (typeof cs.getViewport === 'function') return cs.getViewport(el);
+  } catch {}
+  return null;
+}
+
+function makeSafeViewport(image: any, el: HTMLElement): any {
+  const base = safeGetViewport(el) || {};
+  const ww = (image && (image.windowWidth ?? image?.voiLUT?.windowWidth)) ?? base.voi?.windowWidth ?? 400;
+  const wc = (image && (image.windowCenter ?? image?.voiLUT?.windowCenter)) ?? base.voi?.windowCenter ?? 40;
+
+  return {
+    ...base,
+    invert: base.invert ?? false,
+    hflip: base.hflip ?? false,
+    vflip: base.vflip ?? false,
+    rotation: base.rotation ?? 0,
+    voi: { windowWidth: ww, windowCenter: wc },
+  };
+}
+
+export async function loadDicomFiles(files: File[] | FileList): Promise<string[]> {
+  ensureInitialized();
+
+  const arr: File[] = Array.isArray(files) ? files.slice() : Array.from(files || []);
+  if (!arr.length) return [];
+
+  // Stable order
+  arr.sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }));
+
+  const fm = (cornerstoneWADOImageLoader as any).wadouri?.fileManager;
+  if (!fm || typeof fm.add !== 'function') {
+    throw new Error('DICOM loader not ready: wadouri.fileManager.add not available');
+  }
+
+  currentImageIds = arr.map((f) => fm.add(f));
+  return currentImageIds;
+}
+
+export async function displayImageWithViewport(
+  element: HTMLElement,
+  index: number,
+  viewportState: ViewerViewport
+): Promise<void> {
+  ensureInitialized();
+
+  if (!currentImageIds.length) throw new Error('No DICOM images loaded');
+
+  const safeIndex = Math.max(0, Math.min(index, currentImageIds.length - 1));
+  const imageId = currentImageIds[safeIndex];
+
+  // Ensure the element is enabled FIRST (Cornerstone requirement)
+  let enabled = safeGetEnabledElement(element);
+  if (!enabled) {
+    cornerstone.enable(element as any);
+    if (typeof (cornerstone as any).resize === 'function') {
+      (cornerstone as any).resize(element as any, true);
+    }
+  }
+
+  const image = await cornerstone.loadImage(imageId);
+  cornerstone.displayImage(element as any, image);
+
+  const viewport: any = makeSafeViewport(image, element);
+
+  // Apply transforms from UI state
+  viewport.invert = !!viewportState.invert;
+  viewport.hflip = !!viewportState.hflip;
+  viewport.vflip = !!viewportState.vflip;
+  viewport.rotation = viewportState.rotation ?? 0;
+
+  if (viewportState.windowCenter != null && viewportState.windowWidth != null) {
+    viewport.voi = { windowCenter: viewportState.windowCenter, windowWidth: viewportState.windowWidth };
+  }
+
+  cornerstone.setViewport(element as any, viewport);
+
+  // One more resize after first draw (helps when React layout finishes)
+  if (typeof (cornerstone as any).resize === 'function') {
+    (cornerstone as any).resize(element as any, true);
+  }
+}

@@ -1,0 +1,36 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Radiology AI Viewer - Reset Saved Settings</title>
+</head>
+<body style="font-family:system-ui;padding:24px">
+  <h2>Resetting saved settings...</h2>
+  <pre id="log" style="background:#111;color:#0f0;padding:12px;border-radius:8px"></pre>
+
+  <script>
+    (function () {
+      const logEl = document.getElementById('log');
+      const log = (m) => (logEl.textContent += m + "\n");
+
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+        log("OK: localStorage cleared");
+        log("OK: sessionStorage cleared");
+      } catch (e) {
+        log("ERROR: " + (e && e.message ? e.message : e));
+      }
+
+      log("");
+      log("Now go back to the app and set API URL to: /radiology-ai-viewer/api");
+      log("Then click Save API, then AI Analyze.");
+    })();
+  </script>
+
+  <p style="margin-top:16px">
+    <a href="/radiology-ai-viewer/">Back to the app</a>
+  </p>
+</body>
+</html>
+
