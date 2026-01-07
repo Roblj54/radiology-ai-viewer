@@ -1,0 +1,33 @@
+[31m✗[39m Build failed in 67ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 2 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:892:47: ERROR: The character ">" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:893:8: ERROR: Unexpected "const"[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:892:47[31m
+[33m
+[33mThe character ">" is not valid inside a JSX element[33m
+890 |    ) : (
+891 |      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+892 |   uiShellSeriesItems.map((s: any, idx: number) => {
+    |                                                 ^
+893 |          const active = idx === uiShellActiveSeriesIdx;
+894 |          const tUrl = uiShellThumbUrl(s.thumbImageId);
+
+[33mUnexpected "const"[33m
+891 |      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+892 |   uiShellSeriesItems.map((s: any, idx: number) => {
+893 |          const active = idx === uiShellActiveSeriesIdx;
+    |          ^
+894 |          const tUrl = uiShellThumbUrl(s.thumbImageId);
+895 |          const label = String(s.label || uiShellT("Series " + (idx + 1), "Serie " + (idx + 1)));
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

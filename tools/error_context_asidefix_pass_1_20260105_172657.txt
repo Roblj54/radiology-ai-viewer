@@ -1,0 +1,249 @@
+
+===== Context around line 1402 =====
+ 1362: 
+ 1363:                   border: "1px solid rgba(255,255,255,0.12)",
+ 1364: 
+ 1365: 
+ 1366:                   background: "rgba(0,0,0,0.25)",
+ 1367: 
+ 1368: 
+ 1369:                   color: "rgba(255,255,255,0.92)",
+ 1370: 
+ 1371: 
+ 1372:                   padding: 10,
+ 1373: 
+ 1374: 
+ 1375:                   fontSize: 12,
+ 1376: 
+ 1377: 
+ 1378:                   lineHeight: "16px",
+ 1379: 
+ 1380: 
+ 1381:                 }}
+ 1382: 
+ 1383: 
+ 1384:               />
+ 1385: 
+ 1386: 
+ 1387:             </div>
+ 1388: 
+ 1389: 
+ 1390:           ))}
+ 1391: 
+ 1392: 
+ 1393:         </div>
+ 1394: 
+ 1395: 
+ 1396:       )}
+ 1397:       <div style={{ marginTop: 14, ...uiShellMuted }}>
+ 1398:         {uiShellT("Model:", "Modelo:")} {uiShellModelName}  {uiShellT("Version:", "Versión:")} {uiShellModelVersion}
+ 1399:       </div>
+ 1400:     </div>
+ 1401:   </div>
+ 1402: </aside>
+ 1403:   )}
+ 1404: {/* UI_SHELL_RENDER_END */}
+ 1405: 
+ 1406: /* CONTROLS_OVERLAY_HELP_BUTTON_START */
+ 1407: null;
+ 1408: /* CONTROLS_OVERLAY_HELP_BUTTON_END */
+ 1409: (null);
+ 1410: 
+ 1411:   const [lang, setLang] = useState<Lang>('ES');
+ 1412:   const [err, setErr] = useState<string>('');
+ 1413:   const [sliceIndex, setSliceIndex] = useState<number>(0);
+ 1414:   const [sliceCount, setSliceCount] = useState<number>(0);
+ 1415: 
+ 1416:   const [vp, setVp] = useState<ViewerViewport>({
+ 1417:     invert: false,
+ 1418:     hflip: false,
+ 1419:     vflip: false,
+ 1420:     rotation: 0,
+ 1421:     windowCenter: WL_PRESETS.soft.windowCenter,
+ 1422:     windowWidth: WL_PRESETS.soft.windowWidth,
+ 1423:   });
+ 1424: 
+ 1425:   const t = useMemo(() => {
+ 1426:     const ES = {
+ 1427:       title: 'Radiology AI Colombia Health',
+ 1428:       upload: 'Subir DICOM',
+ 1429:       select: 'Seleccionar archivos DICOM',
+ 1430:       loaded: (n: number) => `Serie cargada con ${n} cortes.`,
+ 1431:       study: 'Lista de estudios (demo)',
+ 1432:       patient: 'Paciente 001 CT Chest',
+ 1433:       invert: 'Invertir',
+ 1434:       rot: 'Rotar 90',
+ 1435:       flipH: 'Voltear H',
+ 1436:       flipV: 'Voltear V',
+ 1437:       soft: 'Tejido blando',
+ 1438:       lung: 'Pulmón',
+ 1439:       bone: 'Hueso',
+ 1440:       slice: (i: number, n: number) => `Corte ${i} / ${n}`,
+ 1441:     };
+ 1442:     const EN = {
+
+===== Context around line 1403 =====
+ 1363:                   border: "1px solid rgba(255,255,255,0.12)",
+ 1364: 
+ 1365: 
+ 1366:                   background: "rgba(0,0,0,0.25)",
+ 1367: 
+ 1368: 
+ 1369:                   color: "rgba(255,255,255,0.92)",
+ 1370: 
+ 1371: 
+ 1372:                   padding: 10,
+ 1373: 
+ 1374: 
+ 1375:                   fontSize: 12,
+ 1376: 
+ 1377: 
+ 1378:                   lineHeight: "16px",
+ 1379: 
+ 1380: 
+ 1381:                 }}
+ 1382: 
+ 1383: 
+ 1384:               />
+ 1385: 
+ 1386: 
+ 1387:             </div>
+ 1388: 
+ 1389: 
+ 1390:           ))}
+ 1391: 
+ 1392: 
+ 1393:         </div>
+ 1394: 
+ 1395: 
+ 1396:       )}
+ 1397:       <div style={{ marginTop: 14, ...uiShellMuted }}>
+ 1398:         {uiShellT("Model:", "Modelo:")} {uiShellModelName}  {uiShellT("Version:", "Versión:")} {uiShellModelVersion}
+ 1399:       </div>
+ 1400:     </div>
+ 1401:   </div>
+ 1402: </aside>
+ 1403:   )}
+ 1404: {/* UI_SHELL_RENDER_END */}
+ 1405: 
+ 1406: /* CONTROLS_OVERLAY_HELP_BUTTON_START */
+ 1407: null;
+ 1408: /* CONTROLS_OVERLAY_HELP_BUTTON_END */
+ 1409: (null);
+ 1410: 
+ 1411:   const [lang, setLang] = useState<Lang>('ES');
+ 1412:   const [err, setErr] = useState<string>('');
+ 1413:   const [sliceIndex, setSliceIndex] = useState<number>(0);
+ 1414:   const [sliceCount, setSliceCount] = useState<number>(0);
+ 1415: 
+ 1416:   const [vp, setVp] = useState<ViewerViewport>({
+ 1417:     invert: false,
+ 1418:     hflip: false,
+ 1419:     vflip: false,
+ 1420:     rotation: 0,
+ 1421:     windowCenter: WL_PRESETS.soft.windowCenter,
+ 1422:     windowWidth: WL_PRESETS.soft.windowWidth,
+ 1423:   });
+ 1424: 
+ 1425:   const t = useMemo(() => {
+ 1426:     const ES = {
+ 1427:       title: 'Radiology AI Colombia Health',
+ 1428:       upload: 'Subir DICOM',
+ 1429:       select: 'Seleccionar archivos DICOM',
+ 1430:       loaded: (n: number) => `Serie cargada con ${n} cortes.`,
+ 1431:       study: 'Lista de estudios (demo)',
+ 1432:       patient: 'Paciente 001 CT Chest',
+ 1433:       invert: 'Invertir',
+ 1434:       rot: 'Rotar 90',
+ 1435:       flipH: 'Voltear H',
+ 1436:       flipV: 'Voltear V',
+ 1437:       soft: 'Tejido blando',
+ 1438:       lung: 'Pulmón',
+ 1439:       bone: 'Hueso',
+ 1440:       slice: (i: number, n: number) => `Corte ${i} / ${n}`,
+ 1441:     };
+ 1442:     const EN = {
+ 1443:       title: 'Radiology AI Colombia Health',
+
+===== Context around line 1417 =====
+ 1377: 
+ 1378:                   lineHeight: "16px",
+ 1379: 
+ 1380: 
+ 1381:                 }}
+ 1382: 
+ 1383: 
+ 1384:               />
+ 1385: 
+ 1386: 
+ 1387:             </div>
+ 1388: 
+ 1389: 
+ 1390:           ))}
+ 1391: 
+ 1392: 
+ 1393:         </div>
+ 1394: 
+ 1395: 
+ 1396:       )}
+ 1397:       <div style={{ marginTop: 14, ...uiShellMuted }}>
+ 1398:         {uiShellT("Model:", "Modelo:")} {uiShellModelName}  {uiShellT("Version:", "Versión:")} {uiShellModelVersion}
+ 1399:       </div>
+ 1400:     </div>
+ 1401:   </div>
+ 1402: </aside>
+ 1403:   )}
+ 1404: {/* UI_SHELL_RENDER_END */}
+ 1405: 
+ 1406: /* CONTROLS_OVERLAY_HELP_BUTTON_START */
+ 1407: null;
+ 1408: /* CONTROLS_OVERLAY_HELP_BUTTON_END */
+ 1409: (null);
+ 1410: 
+ 1411:   const [lang, setLang] = useState<Lang>('ES');
+ 1412:   const [err, setErr] = useState<string>('');
+ 1413:   const [sliceIndex, setSliceIndex] = useState<number>(0);
+ 1414:   const [sliceCount, setSliceCount] = useState<number>(0);
+ 1415: 
+ 1416:   const [vp, setVp] = useState<ViewerViewport>({
+ 1417:     invert: false,
+ 1418:     hflip: false,
+ 1419:     vflip: false,
+ 1420:     rotation: 0,
+ 1421:     windowCenter: WL_PRESETS.soft.windowCenter,
+ 1422:     windowWidth: WL_PRESETS.soft.windowWidth,
+ 1423:   });
+ 1424: 
+ 1425:   const t = useMemo(() => {
+ 1426:     const ES = {
+ 1427:       title: 'Radiology AI Colombia Health',
+ 1428:       upload: 'Subir DICOM',
+ 1429:       select: 'Seleccionar archivos DICOM',
+ 1430:       loaded: (n: number) => `Serie cargada con ${n} cortes.`,
+ 1431:       study: 'Lista de estudios (demo)',
+ 1432:       patient: 'Paciente 001 CT Chest',
+ 1433:       invert: 'Invertir',
+ 1434:       rot: 'Rotar 90',
+ 1435:       flipH: 'Voltear H',
+ 1436:       flipV: 'Voltear V',
+ 1437:       soft: 'Tejido blando',
+ 1438:       lung: 'Pulmón',
+ 1439:       bone: 'Hueso',
+ 1440:       slice: (i: number, n: number) => `Corte ${i} / ${n}`,
+ 1441:     };
+ 1442:     const EN = {
+ 1443:       title: 'Radiology AI Colombia Health',
+ 1444:       upload: 'Upload DICOM',
+ 1445:       select: 'Select DICOM files',
+ 1446:       loaded: (n: number) => `Loaded series with ${n} slices.`,
+ 1447:       study: 'Study list (demo)',
+ 1448:       patient: 'Patient 001 CT Chest',
+ 1449:       invert: 'Invert',
+ 1450:       rot: 'Rotate 90',
+ 1451:       flipH: 'Flip H',
+ 1452:       flipV: 'Flip V',
+ 1453:       soft: 'Soft tissue',
+ 1454:       lung: 'Lung',
+ 1455:       bone: 'Bone',
+ 1456:       slice: (i: number, n: number) => `Slice ${i} / ${n}`,
+ 1457:     };

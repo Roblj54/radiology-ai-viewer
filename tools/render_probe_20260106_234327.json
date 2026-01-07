@@ -1,0 +1,66 @@
+{
+  "a": {
+    "info": {
+      "url": "http://127.0.0.1:5173/",
+      "title": "Radiology AI Colombia Health",
+      "rootExists": true,
+      "rootChildCount": 1,
+      "rootTextLen": 100,
+      "rootHtmlLen": 1279,
+      "rootDisplay": "block",
+      "rootVisibility": "visible",
+      "rootHeight": 900,
+      "bodyHeight": 900
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      }
+    ]
+  },
+  "b": {
+    "info": {
+      "url": "http://127.0.0.1:5173/radiology-ai-viewer/",
+      "title": "Radiology AI Colombia Health",
+      "rootExists": true,
+      "rootChildCount": 1,
+      "rootTextLen": 100,
+      "rootHtmlLen": 1279,
+      "rootDisplay": "block",
+      "rootVisibility": "visible",
+      "rootHeight": 900,
+      "bodyHeight": 900
+    },
+    "logs": [
+      {
+        "type": "debug",
+        "text": "[vite] connecting..."
+      },
+      {
+        "type": "debug",
+        "text": "[vite] connected."
+      },
+      {
+        "type": "info",
+        "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+      },
+      {
+        "type": "error",
+        "text": "WebSocket connection to 'ws://127.0.0.1:5173/?token=QTwpbnzNWs1W' failed: "
+      },
+      {
+        "type": "log",
+        "text": "[vite] server connection lost. Polling for restart..."
+      }
+    ]
+  }
+}

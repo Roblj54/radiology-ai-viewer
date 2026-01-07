@@ -1,0 +1,31 @@
+
+> radiology-ai-viewer@1.0.0 build
+> vite build
+
+[36mvite v7.3.0 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 3 modules transformed.
+[31m✗[39m Build failed in 43ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 1 error:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:690:4: ERROR: Expected identifier but found "{"[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:690:4[31m
+[33m
+[33mExpected identifier but found "{"[33m
+688 |  <div
+689 |  style={{
+690 |      {/* Spacer so fixed topbar does not cover content */}
+    |      ^
+691 |      <div style={{ height: uiShellTopH }} />
+692 |      <div style={{ height: uiShellThumbStripH }} />
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

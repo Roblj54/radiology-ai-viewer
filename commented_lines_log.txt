@@ -1,0 +1,5 @@
+Line 928: Commented self closing ? //       <div style={{ height: uiShellTopH }} />
+Line 929: Commented self closing ? //       <div style={{ height: uiShellThumbStripH }} />
+Line 1047: Commented self closing ? //                 <input type="file" multiple accept=".dcm,application/dicom" onChange={onFiles} style={{ display: 'none' }} />
+Line 1075: Commented self closing ? //               />
+Line 1086: Commented self closing ? //               />

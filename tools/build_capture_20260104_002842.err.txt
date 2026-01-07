@@ -1,0 +1,42 @@
+[31m✗[39m Build failed in 79ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 3 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:854:4: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:855:2: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:974:31: ERROR: Expected "}" but found "."[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:854:4[31m
+[33m
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+852 |      >
+853 |      </button>
+854 |    </div>
+    |      ^
+855 |  </div>
+856 |  
+
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+853 |      </button>
+854 |    </div>
+855 |  </div>
+    |    ^
+856 |  
+857 |  
+
+[33mExpected "}" but found "."[33m
+972 |              uiShellT("No series loaded yet.", "Aún no hay series cargadas.")
+973 |          ) : (
+974 |              {uiShellSeriesItems.map((s: UiShellSeriesCard, idx: number) => {
+    |                                 ^
+975 |                const active = idx === uiShellActiveSeriesIdx;
+976 |                const tUrl = uiShellThumbUrl(s.thumbImageId);
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

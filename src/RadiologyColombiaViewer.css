@@ -1,0 +1,10 @@
+﻿button{
+background:#0b1220;
+color:#e5e7eb;
+border:1px solid #334155;
+padding:6px 10px;
+border-radius:8px;
+cursor:pointer;
+}
+button:hover{ border-color:#64748b; }
+button:disabled{ opacity:0.5; cursor:not-allowed; }

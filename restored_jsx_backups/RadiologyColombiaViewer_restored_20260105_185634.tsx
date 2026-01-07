@@ -1,7 +1,6 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+﻿import React, { useMemo, useRef, useState, useEffect } from "react";
 import "./RadiologyColombiaViewer.css";
-import {
-loadDicomFiles, displayImageWithViewport, getLoadedCount, ViewerViewport } from './dicomLoader';
+import { loadDicomFiles, displayImageWithViewport, getLoadedCount, ViewerViewport } from './dicomLoader';
 
 
 import { attachCornerstoneMouseControls } from "./mouseControls";
@@ -16,19 +15,14 @@ const WL_PRESETS = {
 };
 
 export default function RadiologyColombiaViewer() {
-  const [sliceIndex, setSliceIndex] = useState<number>(0);
-  // UI Shell: overlay control hook (prevents runtime crash)
-  const [controlsOverlayVisible, setControlsOverlayVisible] = useState(false);
-  const showControlsOverlay = (show = true) => setControlsOverlayVisible(!!show);
-  // UI Shell compatibility: some code expects a React-like setter name
-  const setShowControlsOverlay = (v: boolean | ((prev: boolean) => boolean)) => {
-    const next = (typeof v === "function") ? (v as any)(!!controlsOverlayVisible) : v;
-    showControlsOverlay(!!next);
-  };
-
-  const [imageIds, setImageIds] = useState<string[]>([]);
-
-
+{/* UI_SHELL_LOGIC_START */}
+// ------------------------------
+// UI Shell: professional layout scaffolding (Study rail, Viewer, AI Review rail)
+// ------------------------------
+type UiShellStatus = "ready" | "loading" | "running" | "error";
+type UiShellDecision = "accept" | "reject" | "review" | null;
+type UiShellConfidence = "High" | "Medium" | "Low";
+type UiShellSeverity = "Critical" | "Review" | "Info";
 
 type UiShellFinding = {
   id: string;
@@ -634,7 +628,7 @@ const uiShellGoToFinding = (f: any) => {
   }
 };
 {/* UI_SHELL_FINDING_JUMP_END */}
-/* UI_SHELL_LOGIC_END */
+{/* UI_SHELL_LOGIC_END */}
 
 /* CONTROLS_OVERLAY_MANUAL_OPEN_START */
 const controlsOverlayCardRef = useRef<HTMLDivElement | null>(null);
@@ -686,19 +680,95 @@ useEffect(() => {
   };
 }, [showControlsOverlay]);
 /* CONTROLS_OVERLAY_MANUAL_OPEN_END */
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-    
-/* UI_SHELL_RENDER_REMOVED_TEMP (20260106_213409) */
 
+  const viewportRef = useRef<HTMLDivElement | null>
+    {/* UI_SHELL_RENDER_START */}
+    <div style={{ zIndex: 9999, fontWeight: 900, marginBottom: 10 }}>
+      {uiShellT("AI Findings", "Hallazgos de IA")}
+
+    {uiShellFindings.length === 0 ? (
+      <div style={{ ...uiShellMuted, fontSize: 12, padding: 10 }}>
+        {uiShellT("No AI findings available.", "No hay hallazgos de IA.")}
+    ) : (
+      <div>
+        {uiShellFindings.map((f: any, idx: number) => (
+          <div
+            key={String(f.id ?? idx)}
+            style={{
+              border: "1px solid rgba(255,255,255,0.10)",
+              background: "rgba(0,0,0,0.18)",
+              borderRadius: 14,
+              padding: 12,
+              marginBottom: 10,
+            }}
+          >
+            <div style={{ fontWeight: 800 }}>
+              {f.label}
+              {f.location ? ` (${f.location})` : ""}
+
+            <div
+              style={{
+                fontSize: 12,
+                lineHeight: "16px",
+                opacity: 0.9,
+                marginTop: 4,
+              }}
+            >
+              {uiShellT("Confidence:", "Confianza:")} {f.confidence}
+              {f.severity
+                ? ` (${uiShellT("Severity", "Severidad")}: ${f.severity})`
+                : ""}
+
+            {Number.isFinite(f.sliceStart) &&
+            Number.isFinite(f.sliceEnd) ? (
+              <div
+                style={{
+                  fontSize: 12,
+                  lineHeight: "16px",
+                  opacity: 0.9,
+                  marginTop: 4,
+                }}
+              >
+                {uiShellT("Slices", "Cortes")}: {f.sliceStart} -{" "}
+                {f.sliceEnd}
+            ) : null}
+
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginTop: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                onClick={() => uiShellUpdateDecision(f.id, "accept")}
+                style={uiShellBtnBase}
+              >
+                {uiShellT("Accept", "Aceptar")}
+              <button
+                onClick={() => uiShellUpdateDecision(f.id, "reject")}
+                style={uiShellBtnBase}
+              >
+                {uiShellT("Reject", "Rechazar")}
+              <button
+                onClick={() => uiShellUpdateDecision(f.id, "review")}
+                style={uiShellBtnBase}
+              >
+                {uiShellT("Needs review", "Requiere revisión")}
+        ))}
+    )}
+    {/* UI_SHELL_RENDER_END */}
 
 /* CONTROLS_OVERLAY_HELP_BUTTON_START */
 null;
 /* CONTROLS_OVERLAY_HELP_BUTTON_END */
 const [lang, setLang] = useState<Lang>('ES');
   const [err, setErr] = useState<string>('');
+  const [sliceIndex, setSliceIndex] = useState<number>(0);
   const [sliceCount, setSliceCount] = useState<number>(0);
 
-;   const [vp, setVp] = useState<ViewerViewport>({
+  const [vp, setVp] = useState<ViewerViewport>({
     invert: false,
     hflip: false,
     vflip: false,
@@ -853,142 +923,172 @@ const [lang, setLang] = useState<Lang>('ES');
   // === End controls hook ===
 
   return (
-    <div style={{ padding: 16, background: "#0b1220", color: "#e5e7eb", minHeight: "100vh" }}>
-      {err ? (
-        <div
-          style={{
-            border: "1px solid #ef4444",
-            background: "rgba(239,68,68,0.08)",
-            color: "#fecaca",
-            padding: 10,
-            borderRadius: 10,
-            marginBottom: 12,
-            fontFamily:
-              'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-            fontSize: 12,
-          }}
-        >
-          Load error: {err}
-        </div>
-      ) : null}
-  
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16 }}>
-        <div>
-          <label
+    <div>
+{/* Spacer so fixed topbar does not cover content */}
+// //       <div style={{ height: uiShellTopH }} />
+// //       <div style={{ height: uiShellThumbStripH }} />
+      
+      
+{showControlsHelp && (
+      
+      
+    <div
+      
+      
+      style={{
+      
+      
+        position: "fixed",
+      
+      
+        top: 88,
+      
+      
+        right: 12,
+      
+      
+        width: 360,
+      
+      
+        maxWidth: "92vw",
+      
+      
+        padding: 12,
+      
+      
+        borderRadius: 16,
+      
+      
+        border: "1px solid rgba(255,255,255,0.10)",
+      
+      
+        background: "rgba(12,12,12,0.92)",
+      
+      
+        color: "rgba(255,255,255,0.92)",
+      
+      
+        zIndex: 10000,
+      
+      
+      }}
+      
+      
+    >
+      
+      
+      <div style={{ fontWeight: 900, marginBottom: 8 }}>
+      
+      
+{lang === "ES" ? "Controles" : "Controls"}
+      
+      
+      
+      
+      <div style={{ fontSize: 12, lineHeight: "16px", opacity: 0.9 }}>
+      
+      
+{lang === "ES"
+      
+      
+          ? "Rueda: zoom. Arrastrar: mover. Doble clic: reiniciar. Teclas:   para navegar."
+      
+      
+          : "Wheel: zoom. Drag: pan. Double click: reset. Keys:   to navigate."}
+      
+      
+      
+      
+      
+      
+  )}
+          <button
+            onClick={() => setLang((p) => (p === 'ES' ? 'EN' : 'ES'))}
             style={{
-              display: "inline-block",
-              padding: "8px 12px",
-              borderRadius: 999,
-              border: "1px solid #0ea5a6",
-              color: "#d1fae5",
-              cursor: "pointer",
-              userSelect: "none",
+              background: 'transparent',
+              color: '#e5e7eb',
+              border: '1px solid #334155',
+              padding: '6px 10px',
+              borderRadius: 8,
+              cursor: 'pointer',
             }}
           >
-            {t.select}
-            <input
-              type="file"
-              multiple
-              accept=".dcm,application/dicom"
-              onChange={onFiles}
-              style={{ display: "none" }}
-            />
-          </label>
-  
-          <div style={{ marginTop: 10, color: "#93a4b8", fontSize: 12 }}>
-            {sliceCount ? t.loaded(sliceCount) : "No series loaded yet."}
-          </div>
-  
-          {/* UI_SHELL_RENDER_START */}
-<div style={{ marginTop: 14, padding: 12, border: "1px solid rgba(255,255,255,0.10)", borderRadius: 12, background: "rgba(0,0,0,0.18)" }}>
-  <div style={{ fontWeight: 800, marginBottom: 8 }}>
-    {typeof uiShellT === "function" ? uiShellT("AI Findings", "Hallazgos de IA") : "AI Findings"}
-  </div>
+            ES / EN
 
-  {Array.isArray((globalThis as any).uiShellFindings) && (globalThis as any).uiShellFindings.length > 0 ? (
-    <div style={{ display: "grid", gap: 10 }}>
-      {(globalThis as any).uiShellFindings.map((f: any, idx: number) => (
-        <div key={String(f?.id ?? idx)} style={{ padding: 10, borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ fontWeight: 700 }}>
-            {f?.label ?? "Finding"}
-            {f?.location ? ` (${f.location})` : ""}
-          </div>
-
-          <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>
-            {(typeof uiShellT === "function" ? uiShellT("Confidence:", "Confianza:") : "Confidence:")} {f?.confidence ?? ""}
-            {f?.severity ? ` (${typeof uiShellT === "function" ? uiShellT("Severity", "Severidad") : "Severity"}: ${f.severity})` : ""}
-          </div>
-
-          {(Number.isFinite(f?.sliceStart) && Number.isFinite(f?.sliceEnd)) ? (
-            <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>
-              {(typeof uiShellT === "function" ? uiShellT("Slices", "Cortes") : "Slices")}: {f.sliceStart} - {f.sliceEnd}
-            </div>
-          ) : null}
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-            <button
-              onClick={() => (typeof (globalThis as any).uiShellUpdateDecision === "function" ? (globalThis as any).uiShellUpdateDecision(f?.id, "accept") : null)}
-              style={{ padding: "6px 10px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(14,165,166,0.15)", color: "#d1fae5", cursor: "pointer" }}
-            >
-              {typeof uiShellT === "function" ? uiShellT("Accept", "Aceptar") : "Accept"}
-            </button>
-
-            <button
-              onClick={() => (typeof (globalThis as any).uiShellUpdateDecision === "function" ? (globalThis as any).uiShellUpdateDecision(f?.id, "reject") : null)}
-              style={{ padding: "6px 10px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(239,68,68,0.15)", color: "#fecaca", cursor: "pointer" }}
-            >
-              {typeof uiShellT === "function" ? uiShellT("Reject", "Rechazar") : "Reject"}
-            </button>
-
-            <button
-              onClick={() => (typeof (globalThis as any).uiShellUpdateDecision === "function" ? (globalThis as any).uiShellUpdateDecision(f?.id, "review") : null)}
-              style={{ padding: "6px 10px", borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(245,158,11,0.18)", color: "#fde68a", cursor: "pointer" }}
-            >
-              {typeof uiShellT === "function" ? uiShellT("Needs review", "Requiere revisión") : "Needs review"}
-            </button>
-          </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div style={{ fontSize: 12, opacity: 0.75 }}>
-      {typeof uiShellT === "function" ? uiShellT("No AI findings available.", "No hay hallazgos de IA.") : "No AI findings available."}
-    </div>
-  )}
-</div>
-{/* UI_SHELL_RENDER_END */}
-        </div>
-  
-        <div>
+{err ? (
           <div
-            ref={viewportRef}
-            id="dicomImage"
             style={{
-              width: "100%",
-              height: 520,
-              background: "#060a16",
+              border: '1px solid #ef4444',
+              background: 'rgba(239,68,68,0.08)',
+              color: '#fecaca',
+              padding: 10,
               borderRadius: 10,
-              border: "1px solid #1f2a44",
-              overflow: "hidden",
+              marginBottom: 12,
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+              fontSize: 12,
             }}
-          />
-  
-          <div style={{ marginTop: 10 }}>
-            <input
-              type="range"
-              min={0}
-              max={Math.max(0, sliceCount - 1)}
-              value={sliceIndex}
-              onChange={(e) => goTo(parseInt(e.target.value, 10))}
-              style={{ width: "100%" }}
-              disabled={!sliceCount}
-            />
-            <div style={{ color: "#93a4b8", fontSize: 12, marginTop: 6 }}>
-              {sliceCount ? t.slice(sliceIndex + 1, sliceCount) : t.slice(0, 0)}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          >
+            Load error: {err}
+        ) : null}
+
+        <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 16 }}>
+              <label
+                style={{
+                  display: 'inline-block',
+                  padding: '8px 12px',
+                  borderRadius: 999,
+                  border: '1px solid #0ea5a6',
+                  color: '#d1fae5',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+{t.select}
+// //                 <input type="file" multiple accept=".dcm,application/dicom" onChange={onFiles} style={{ display: 'none' }} />
+//               </label>
+
+              <div style={{ marginTop: 10, color: '#93a4b8', fontSize: 12 }}>
+{sliceCount ? t.loaded(sliceCount) : 'No series loaded yet.'}
+
+
+//               <button onClick={() => updateViewport({ invert: !vp.invert })}>{t.invert}</button>
+//               <button onClick={() => updateViewport({ rotation: ((vp.rotation ?? 0) + 90) % 360 })}>{t.rot}</button>
+//               <button onClick={() => updateViewport({ hflip: !vp.hflip })}>{t.flipH}</button>
+//               <button onClick={() => updateViewport({ vflip: !vp.vflip })}>{t.flipV}</button>
+
+
+//               <button onClick={() => updateViewport(WL_PRESETS.soft)}>{t.soft}</button>
+//               <button onClick={() => updateViewport(WL_PRESETS.lung)}>{t.lung}</button>
+//               <button onClick={() => updateViewport(WL_PRESETS.bone)}>{t.bone}</button>
+
+              <div
+                ref={viewportRef}
+                id="dicomImage"
+                style={{
+                  width: '100%',
+                  height: 520,
+                  background: '#060a16',
+                  borderRadius: 10,
+                  border: '1px solid #1f2a44',
+                  overflow: 'hidden',
+                }}
+// //               />
+
+            <div style={{ marginTop: 10 }}>
+              <input
+                type="range"
+                min={0}
+                max={Math.max(0, sliceCount - 1)}
+                value={sliceIndex}
+                onChange={(e) => goTo(parseInt(e.target.value, 10))}
+                style={{ width: '100%' }}
+                disabled={!sliceCount}
+// //               />
+              <div style={{ color: '#93a4b8', fontSize: 12, marginTop: 6 }}>
+{sliceCount ? t.slice(sliceIndex + 1, sliceCount) : t.slice(0, 0)}
+
   );
 }
+
+
+

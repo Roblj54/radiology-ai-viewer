@@ -1,0 +1,33 @@
+[31m✗[39m Build failed in 46ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 2 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1265:12: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1267:7: ERROR: Expected ")" but found "}"[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1265:12[31m
+[33m
+[33mThe character "}" is not valid inside a JSX element[33m
+1263 |                </div>
+1264 |              </div>
+1265 |            ))}
+     |              ^
+1266 |          </div>
+1267 |        )}
+
+[33mExpected ")" but found "}"[33m
+1265 |            ))}
+1266 |          </div>
+1267 |        )}
+     |         ^
+1268 |  
+1269 |        <div style={{ marginTop: 14, ...uiShellMuted }}>
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

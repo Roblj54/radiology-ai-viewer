@@ -1,0 +1,40 @@
+[31m✗[39m Build failed in 66ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 3 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1031:12: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1109:0: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1113:0: ERROR: Unexpected end of file before a closing "div" tag[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1031:12[31m
+[33m
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+1029|            >
+1030|              ES / EN
+1031|            </div>
+    |              ^
+1032|  
+1033|  {err ? (
+
+[33mThe character "}" is not valid inside a JSX element[33m
+1107 |      </div>
+1108 |    );
+1109 |  }
+     |  ^
+1110 |  
+1111 |  
+
+[33mUnexpected end of file before a closing "div" tag[33m
+1111 |  
+1112 |  
+1113 |  
+     |  ^
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

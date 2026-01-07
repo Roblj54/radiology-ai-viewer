@@ -1,0 +1,69 @@
+[31m✗[39m Build failed in 51ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 6 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1025:12: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1026:9: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1028:0: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1028:4: ERROR: The character "}" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1034:3: ERROR: The character "}" is not valid inside a JSX element
+...[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1025:12[31m
+[33m
+[33mThe character "}" is not valid inside a JSX element[33m
+1023 |                            {uiShellT("Slices", "Cortes")}: {Number.isFinite(s.count) ? s.count : 0}
+1024 |                );
+1025 |              })
+     |              ^
+1026 |          )}
+1027 |    );
+
+[33mThe character "}" is not valid inside a JSX element[33m
+1024 |                );
+1025 |              })
+1026 |          )}
+     |           ^
+1027 |    );
+1028 |  })()}
+
+[33mThe character "}" is not valid inside a JSX element[33m
+1026 |          )}
+1027 |    );
+1028 |  })()}
+     |  ^
+1029 |  
+1030 |          {uiShellT(
+
+[33mThe character "}" is not valid inside a JSX element[33m
+1026 |          )}
+1027 |    );
+1028 |  })()}
+     |      ^
+1029 |  
+1030 |          {uiShellT(
+
+[33mThe character "}" is not valid inside a JSX element[33m
+1032 |            "Rueda: cortes. Arrastrar: ventana nivel. Doble clic: restablecer. Esc: cerrar superposiciones."
+1033 |          )}
+1034 |    )}
+     |     ^
+1035 |  
+1036 |  <aside
+
+[33mExpected identifier but found "\"Run AI to view findings. Each finding will include confidence, evidence, and review actions.\""[33m
+1164 |        {uiShellFindings.length === 0 ? (
+1165 |            {uiShellT(
+1166 |              "Run AI to view findings. Each finding will include confidence, evidence, and review actions.",
+     |              ^
+1167 |              "Ejecute la IA para ver hallazgos. Cada hallazgo incluirá confianza, evidencia y acciones."
+1168 |            )}
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

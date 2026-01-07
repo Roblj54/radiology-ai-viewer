@@ -1,0 +1,157 @@
+﻿diff --git "a/C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\src\\RadiologyColombiaViewer.tsx.bak_20260105_173908" "b/C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\src\\RadiologyColombiaViewer.tsx"
+index 9b0be27..bdc2071 100644
+--- "a/C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\src\\RadiologyColombiaViewer.tsx.bak_20260105_173908"
++++ "b/C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\src\\RadiologyColombiaViewer.tsx"
+@@ -929,83 +929,81 @@ const [lang, setLang] = useState<Lang>('ES');
+       
+       
+   {showControlsHelp && (
++      
++      
++    <div
++      
++      
+       style={{
++      
++      
+         position: "fixed",
++      
++      
+         top: 88,
+-        right: 24,
+-        zIndex: 9999,
+-        maxWidth: 360,
+-        background: "rgba(0,0,0,0.78)",
+-        color: "#fff",
+-        border: "1px solid rgba(255,255,255,0.16)",
+-        borderRadius: 14,
+-        padding: "12px 14px",
+-        boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+-        fontSize: 12,
+-        lineHeight: 1.35
++      
++      
++        right: 12,
++      
++      
++        width: 360,
++      
++      
++        maxWidth: "92vw",
++      
++      
++        padding: 12,
++      
++      
++        borderRadius: 16,
++      
++      
++        border: "1px solid rgba(255,255,255,0.10)",
++      
++      
++        background: "rgba(12,12,12,0.92)",
++      
++      
++        color: "rgba(255,255,255,0.92)",
++      
++      
++        zIndex: 10000,
++      
++      
+       }}
+-      aria-label="Controls help"
+-     ref={controlsOverlayCardRef} onMouseDown={(e) =>
+-{/* CONTROLS_OVERLAY_CLOSE_X_START */}
+-<button
+-  type="button"
+-  onClick={(e) => { e.stopPropagation(); closeControlsOverlay(); }}
+-  title={_controlsIsES ? "Cerrar" : "Close"}
+-  aria-label={_controlsIsES ? "Cerrar" : "Close"}
+-  style={{
+-    position: "absolute",
+-    top: 10,
+-    right: 10,
+-    width: 28,
+-    height: 28,
+-    borderRadius: 999,
+-    border: "1px solid rgba(255,255,255,0.35)",
+-    background: "rgba(0,0,0,0.55)",
+-    color: "white",
+-    cursor: "pointer",
+-    fontWeight: 900,
+-    fontSize: 16,
+-    lineHeight: "26px",
+-    textAlign: "center",
+-  }}
+->
+-  
+-</button>
+-{/* CONTROLS_OVERLAY_CLOSE_X_END */}
+- e.stopPropagation()}>
+-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 8 }}>
+-          {__controlsIsES ? "Controles (ES)" : "Controls (EN)"}
+-        <button
+-          onClick={() => setShowControlsHelp(false)}
+-          style={{
+-            background: "transparent",
+-            color: "#fff",
+-            border: "1px solid rgba(255,255,255,0.25)",
+-            borderRadius: 10,
+-            padding: "2px 8px",
+-            cursor: "pointer"
+-          }}
+-          aria-label={__controlsIsES ? "Cerrar" : "Close"}
+-          type="button"
+-        >
+-          X
+-        </button>
++      
++      
++    >
++      
++      
++      <div style={{ fontWeight: 900, marginBottom: 8 }}>
++      
++      
++        {lang === "ES" ? "Controles" : "Controls"}
++      
++      
+       </div>
+-
+-      <div style={{ marginBottom: 6 }}>
+-        <span style={{ fontWeight: 700 }}>{__controlsIsES ? "Rat├│n:" : "Mouse:"}</span>{" "}
+-        {__controlsIsES
+-          ? "Arrastra con clic izquierdo para ventana y nivel, clic derecho para zoom, clic medio para mover, rueda para cambiar cortes, doble clic para restablecer."
+-          : "Left drag window and level, right drag zoom, middle drag pan, wheel changes slices, double click resets."}
+-
+-        <span style={{ fontWeight: 700 }}>{__controlsIsES ? "Teclado:" : "Keys:"}</span>{" "}
+-        {__controlsIsES
+-          ? "Haz clic en la imagen y luego usa flechas para cambiar cortes, R para restablecer, W para alternar presets, L para invertir."
+-          : "Click the viewport, then use arrow keys for slices, R reset, W cycle presets, L invert."}
+-
+-        {__controlsIsES ? "Cierra con X, Esc o clic afuera." : "Close with X, Esc, or outside click."}
++      
++      
++      <div style={{ fontSize: 12, lineHeight: "16px", opacity: 0.9 }}>
++      
++      
++        {lang === "ES"
++      
++      
++          ? "Rueda: zoom. Arrastrar: mover. Doble clic: reiniciar. Teclas:   para navegar."
++      
++      
++          : "Wheel: zoom. Drag: pan. Double click: reset. Keys:   to navigate."}
++      
++      
++      </div>
++      
++      
++    </div>
++      
++      
+   )}
+-
+           <button
+             onClick={() => setLang((p) => (p === 'ES' ? 'EN' : 'ES'))}
+             style={{

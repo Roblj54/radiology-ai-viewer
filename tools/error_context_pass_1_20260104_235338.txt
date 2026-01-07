@@ -1,0 +1,246 @@
+
+===== Context around line 1265 =====
+ 1205:       fontSize: 12,
+ 1206:       lineHeight: "16px",
+ 1207:       cursor: "pointer",
+ 1208:       fontWeight: 800,
+ 1209:     }}
+ 1210:     title={uiShellT("Jump to slice range", "Saltar al rango de cortes")}
+ 1211:     aria-label={uiShellT("Go to slices", "Ir a cortes")}
+ 1212:   >
+ 1213:     {uiShellT("Go to", "Ir a")}
+ 1214:   </button>
+ 1215: </div>
+ 1216: {/* UI_SHELL_FINDING_JUMP_UI_END */}
+ 1217: 
+ 1218:               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+ 1219:                     {f.label}{f.location ? " (" + f.location + ")" : ""}
+ 1220:                     {uiShellT("Confidence:", "Confianza:")} {f.confidence}
+ 1221:                     {f.severity ? " (" + uiShellT("Severity", "Severidad") + ": " + f.severity + ")" : ""}
+ 1222:                     {(Number.isFinite(f.sliceStart) && Number.isFinite(f.sliceEnd)) ? (
+ 1223:                       uiShellT("Slices", "Cortes") + ": " + f.sliceStart + " - " + f.sliceEnd
+ 1224:                     ) : ""}
+ 1225:                   {f.decision
+ 1226:                     ? uiShellT("Marked", "Marcado") + ": " + f.decision
+ 1227:                     : uiShellT("Not reviewed", "Sin revisar")}
+ 1228: 
+ 1229:               {f.evidenceText && (
+ 1230:                 <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.3, opacity: 0.9 }}>
+ 1231:                   <strong>{uiShellT("Evidence", "Evidencia")}:</strong>{" "}{f.evidenceText}
+ 1232:                 </div>
+ 1233:               )}
+ 1234: 
+ 1235:                 <div onClick={() => uiShellUpdateDecision(f.id, "accept")} style={uiShellBtnBase}>
+ 1236:                   {uiShellT("Accept", "Aceptar")}
+ 1237:                 </div>
+ 1238:                 <div onClick={() => uiShellUpdateDecision(f.id, "reject")} style={uiShellBtnBase}>
+ 1239:                   {uiShellT("Reject", "Rechazar")}
+ 1240:                 </div>
+ 1241:                 <div onClick={() => uiShellUpdateDecision(f.id, "review")} style={uiShellBtnBase}>
+ 1242:                   role="button"
+ 1243:                   tabIndex={0}
+ 1244:                   {uiShellT("Needs review", "Requiere revisión")}
+ 1245: 
+ 1246:                 <textarea
+ 1247:                   value={f.note || ""}
+ 1248:                   onChange={(e) => uiShellSetNote(f.id, e.target.value)}
+ 1249:                   placeholder={uiShellT("Optional note", "Nota opcional")}
+ 1250:                   style={{
+ 1251:                     width: "100%",
+ 1252:                     minHeight: 60,
+ 1253:                     resize: "vertical",
+ 1254:                     borderRadius: 12,
+ 1255:                     border: "1px solid rgba(255,255,255,0.12)",
+ 1256:                     background: "rgba(0,0,0,0.25)",
+ 1257:                     color: "rgba(255,255,255,0.92)",
+ 1258:                     padding: 10,
+ 1259:                     fontSize: 12,
+ 1260:                     lineHeight: "16px",
+ 1261:                   }}
+ 1262:                 />
+ 1263:               </div>
+ 1264:             </div>
+ 1265:           ))}
+ 1266:         </div>
+ 1267:       )}
+ 1268: 
+ 1269:       <div style={{ marginTop: 14, ...uiShellMuted }}>
+ 1270:         {uiShellT("Model:", "Modelo:")} {uiShellModelName}  {uiShellT("Version:", "Versión:")} {uiShellModelVersion}
+ 1271:       </div>
+ 1272:     </div>
+ 1273: </aside>
+ 1274:   )}
+ 1275: {/* UI_SHELL_RENDER_END */}
+ 1276: 
+ 1277: /* CONTROLS_OVERLAY_HELP_BUTTON_START */
+ 1278: {!uiShellUseTopbarHelp && (
+ 1279:   <>
+ 1280:     {/* Legacy fixed help button is intentionally hidden when Top bar Help is enabled */}
+ 1281:     <div
+ 1282:       role="button"
+ 1283:       tabIndex={0}
+ 1284: 
+ 1285:       onClick={() => toggleControlsOverlay()}
+ 1286:       title={uiShellIsES ? "Controles" : "Controls"}
+ 1287:       aria-label={uiShellIsES ? "Controles" : "Controls"}
+ 1288:       style={{ display: "none" }}
+ 1289:     >
+ 1290: )}
+ 1291: /* CONTROLS_OVERLAY_HELP_BUTTON_END */
+ 1292: (null);
+ 1293: 
+ 1294:   const [lang, setLang] = useState<Lang>('ES');
+ 1295:   const [err, setErr] = useState<string>('');
+ 1296:   const [sliceIndex, setSliceIndex] = useState<number>(0);
+ 1297:   const [sliceCount, setSliceCount] = useState<number>(0);
+ 1298: 
+ 1299:   const [vp, setVp] = useState<ViewerViewport>({
+ 1300:     invert: false,
+ 1301:     hflip: false,
+ 1302:     vflip: false,
+ 1303:     rotation: 0,
+ 1304:     windowCenter: WL_PRESETS.soft.windowCenter,
+ 1305:     windowWidth: WL_PRESETS.soft.windowWidth,
+ 1306:   });
+ 1307: 
+ 1308:   const t = useMemo(() => {
+ 1309:     const ES = {
+ 1310:       title: 'Radiology AI Colombia Health',
+ 1311:       upload: 'Subir DICOM',
+ 1312:       select: 'Seleccionar archivos DICOM',
+ 1313:       loaded: (n: number) => `Serie cargada con ${n} cortes.`,
+ 1314:       study: 'Lista de estudios (demo)',
+ 1315:       patient: 'Paciente 001 CT Chest',
+ 1316:       invert: 'Invertir',
+ 1317:       rot: 'Rotar 90',
+ 1318:       flipH: 'Voltear H',
+ 1319:       flipV: 'Voltear V',
+ 1320:       soft: 'Tejido blando',
+ 1321:       lung: 'Pulmón',
+ 1322:       bone: 'Hueso',
+ 1323:       slice: (i: number, n: number) => `Corte ${i} / ${n}`,
+ 1324:     };
+ 1325:     const EN = {
+
+===== Context around line 1267 =====
+ 1207:       cursor: "pointer",
+ 1208:       fontWeight: 800,
+ 1209:     }}
+ 1210:     title={uiShellT("Jump to slice range", "Saltar al rango de cortes")}
+ 1211:     aria-label={uiShellT("Go to slices", "Ir a cortes")}
+ 1212:   >
+ 1213:     {uiShellT("Go to", "Ir a")}
+ 1214:   </button>
+ 1215: </div>
+ 1216: {/* UI_SHELL_FINDING_JUMP_UI_END */}
+ 1217: 
+ 1218:               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+ 1219:                     {f.label}{f.location ? " (" + f.location + ")" : ""}
+ 1220:                     {uiShellT("Confidence:", "Confianza:")} {f.confidence}
+ 1221:                     {f.severity ? " (" + uiShellT("Severity", "Severidad") + ": " + f.severity + ")" : ""}
+ 1222:                     {(Number.isFinite(f.sliceStart) && Number.isFinite(f.sliceEnd)) ? (
+ 1223:                       uiShellT("Slices", "Cortes") + ": " + f.sliceStart + " - " + f.sliceEnd
+ 1224:                     ) : ""}
+ 1225:                   {f.decision
+ 1226:                     ? uiShellT("Marked", "Marcado") + ": " + f.decision
+ 1227:                     : uiShellT("Not reviewed", "Sin revisar")}
+ 1228: 
+ 1229:               {f.evidenceText && (
+ 1230:                 <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.3, opacity: 0.9 }}>
+ 1231:                   <strong>{uiShellT("Evidence", "Evidencia")}:</strong>{" "}{f.evidenceText}
+ 1232:                 </div>
+ 1233:               )}
+ 1234: 
+ 1235:                 <div onClick={() => uiShellUpdateDecision(f.id, "accept")} style={uiShellBtnBase}>
+ 1236:                   {uiShellT("Accept", "Aceptar")}
+ 1237:                 </div>
+ 1238:                 <div onClick={() => uiShellUpdateDecision(f.id, "reject")} style={uiShellBtnBase}>
+ 1239:                   {uiShellT("Reject", "Rechazar")}
+ 1240:                 </div>
+ 1241:                 <div onClick={() => uiShellUpdateDecision(f.id, "review")} style={uiShellBtnBase}>
+ 1242:                   role="button"
+ 1243:                   tabIndex={0}
+ 1244:                   {uiShellT("Needs review", "Requiere revisión")}
+ 1245: 
+ 1246:                 <textarea
+ 1247:                   value={f.note || ""}
+ 1248:                   onChange={(e) => uiShellSetNote(f.id, e.target.value)}
+ 1249:                   placeholder={uiShellT("Optional note", "Nota opcional")}
+ 1250:                   style={{
+ 1251:                     width: "100%",
+ 1252:                     minHeight: 60,
+ 1253:                     resize: "vertical",
+ 1254:                     borderRadius: 12,
+ 1255:                     border: "1px solid rgba(255,255,255,0.12)",
+ 1256:                     background: "rgba(0,0,0,0.25)",
+ 1257:                     color: "rgba(255,255,255,0.92)",
+ 1258:                     padding: 10,
+ 1259:                     fontSize: 12,
+ 1260:                     lineHeight: "16px",
+ 1261:                   }}
+ 1262:                 />
+ 1263:               </div>
+ 1264:             </div>
+ 1265:           ))}
+ 1266:         </div>
+ 1267:       )}
+ 1268: 
+ 1269:       <div style={{ marginTop: 14, ...uiShellMuted }}>
+ 1270:         {uiShellT("Model:", "Modelo:")} {uiShellModelName}  {uiShellT("Version:", "Versión:")} {uiShellModelVersion}
+ 1271:       </div>
+ 1272:     </div>
+ 1273: </aside>
+ 1274:   )}
+ 1275: {/* UI_SHELL_RENDER_END */}
+ 1276: 
+ 1277: /* CONTROLS_OVERLAY_HELP_BUTTON_START */
+ 1278: {!uiShellUseTopbarHelp && (
+ 1279:   <>
+ 1280:     {/* Legacy fixed help button is intentionally hidden when Top bar Help is enabled */}
+ 1281:     <div
+ 1282:       role="button"
+ 1283:       tabIndex={0}
+ 1284: 
+ 1285:       onClick={() => toggleControlsOverlay()}
+ 1286:       title={uiShellIsES ? "Controles" : "Controls"}
+ 1287:       aria-label={uiShellIsES ? "Controles" : "Controls"}
+ 1288:       style={{ display: "none" }}
+ 1289:     >
+ 1290: )}
+ 1291: /* CONTROLS_OVERLAY_HELP_BUTTON_END */
+ 1292: (null);
+ 1293: 
+ 1294:   const [lang, setLang] = useState<Lang>('ES');
+ 1295:   const [err, setErr] = useState<string>('');
+ 1296:   const [sliceIndex, setSliceIndex] = useState<number>(0);
+ 1297:   const [sliceCount, setSliceCount] = useState<number>(0);
+ 1298: 
+ 1299:   const [vp, setVp] = useState<ViewerViewport>({
+ 1300:     invert: false,
+ 1301:     hflip: false,
+ 1302:     vflip: false,
+ 1303:     rotation: 0,
+ 1304:     windowCenter: WL_PRESETS.soft.windowCenter,
+ 1305:     windowWidth: WL_PRESETS.soft.windowWidth,
+ 1306:   });
+ 1307: 
+ 1308:   const t = useMemo(() => {
+ 1309:     const ES = {
+ 1310:       title: 'Radiology AI Colombia Health',
+ 1311:       upload: 'Subir DICOM',
+ 1312:       select: 'Seleccionar archivos DICOM',
+ 1313:       loaded: (n: number) => `Serie cargada con ${n} cortes.`,
+ 1314:       study: 'Lista de estudios (demo)',
+ 1315:       patient: 'Paciente 001 CT Chest',
+ 1316:       invert: 'Invertir',
+ 1317:       rot: 'Rotar 90',
+ 1318:       flipH: 'Voltear H',
+ 1319:       flipV: 'Voltear V',
+ 1320:       soft: 'Tejido blando',
+ 1321:       lung: 'Pulmón',
+ 1322:       bone: 'Hueso',
+ 1323:       slice: (i: number, n: number) => `Corte ${i} / ${n}`,
+ 1324:     };
+ 1325:     const EN = {
+ 1326:       title: 'Radiology AI Colombia Health',
+ 1327:       upload: 'Upload DICOM',

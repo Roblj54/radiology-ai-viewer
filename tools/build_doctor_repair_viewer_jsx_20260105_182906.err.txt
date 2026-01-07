@@ -1,0 +1,133 @@
+[31m✗[39m Build failed in 54ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 14 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:705:6: ERROR: Unexpected closing "button" tag does not match opening "div" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:710:8: ERROR: Unexpected closing "button" tag does not match opening "div" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:726:14: ERROR: Unexpected closing "button" tag does not match opening "div" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:731:14: ERROR: Unexpected closing "button" tag does not match opening "div" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:736:16: ERROR: Unexpected closing "button" tag does not match opening "div" tag
+...[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:705:6[31m
+[33m
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+703 |      <div style={{ fontWeight: 900, marginBottom: 10 }}>
+704 |  {uiShellT("AI Findings", "Hallazgos de IA")}
+705 |      </button>
+    |        ^
+706 |  
+707 |  {uiShellFindings.length === 0 ? (
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+708 |        <div style={{ ...uiShellMuted, fontSize: 12, padding: 10 }}>
+709 |  {uiShellT("No AI findings available.", "No hay hallazgos de IA.")}
+710 |        </button>
+    |          ^
+711 |      ) : (
+712 |        <div>
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+724 |              <div style={{ fontWeight: 800 }}>
+725 |  {f.label}{f.location ? " (" + f.location + ")" : ""}
+726 |              </button>
+    |                ^
+727 |  
+728 |              <div style={{ fontSize: 12, lineHeight: "16px", opacity: 0.9, marginTop: 4 }}>
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+729 |  {uiShellT("Confidence:", "Confianza:")} {f.confidence}
+730 |  {f.severity ? " (" + uiShellT("Severity", "Severidad") + ": " + f.severity + ")" : ""}
+731 |              </button>
+    |                ^
+732 |  
+733 |  {(Number.isFinite(f.sliceStart) && Number.isFinite(f.sliceEnd)) ? (
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+734 |                <div style={{ fontSize: 12, lineHeight: "16px", opacity: 0.9, marginTop: 4 }}>
+735 |  {uiShellT("Slices", "Cortes") + ": " + f.sliceStart + " - " + f.sliceEnd}
+736 |                </button>
+    |                  ^
+737 |              ) : null}
+738 |  
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+740 |                <div role="button" tabIndex={0} onClick={() => uiShellUpdateDecision(f.id, "accept")} style={uiShellBtn...
+741 |  {uiShellT("Accept", "Aceptar")}
+742 |                </button>
+    |                  ^
+743 |                <div role="button" tabIndex={0} onClick={() => uiShellUpdateDecision(f.id, "reject")} style={uiShellBtn...
+744 |  {uiShellT("Reject", "Rechazar")}
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+743 |                <div role="button" tabIndex={0} onClick={() => uiShellUpdateDecision(f.id, "reject")} style={uiShellBtn...
+744 |  {uiShellT("Reject", "Rechazar")}
+745 |                </button>
+    |                  ^
+746 |                <div role="button" tabIndex={0} onClick={() => uiShellUpdateDecision(f.id, "review")} style={uiShellBtn...
+747 |  {uiShellT("Needs review", "Requiere revisiÃ³n")}
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+746 |                <div role="button" tabIndex={0} onClick={() => uiShellUpdateDecision(f.id, "review")} style={uiShellBtn...
+747 |  {uiShellT("Needs review", "Requiere revisiÃ³n")}
+748 |            </button>
+    |              ^
+749 |          ))}
+750 |        </button>
+
+[33mThe character "}" is not valid inside a JSX element[33m
+747 |  {uiShellT("Needs review", "Requiere revisiÃ³n")}
+748 |            </button>
+749 |          ))}
+    |            ^
+750 |        </button>
+751 |      )}
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+748 |            </button>
+749 |          ))}
+750 |        </button>
+    |          ^
+751 |      )}
+752 |  
+
+[33mThe character "}" is not valid inside a JSX element[33m
+749 |          ))}
+750 |        </button>
+751 |      )}
+    |       ^
+752 |  
+753 |      <div style={{ marginTop: 14, ...uiShellMuted }}>
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+754 |  {uiShellT("Model:", "Modelo:")} {uiShellModelName}{"  "}
+755 |  {uiShellT("Version:", "VersiÃ³n:")} {uiShellModelVersion}
+756 |      </button>
+    |        ^
+757 |    </button>
+758 |  )}
+
+[33mUnexpected closing "button" tag does not match opening "div" tag[33m
+755 |  {uiShellT("Version:", "VersiÃ³n:")} {uiShellModelVersion}
+756 |      </button>
+757 |    </button>
+    |      ^
+758 |  )}
+759 |  {/* UI_SHELL_RENDER_END */}
+
+[33mExpected ")" but found "}"[33m
+756 |      </button>
+757 |    </button>
+758 |  )}
+    |   ^
+759 |  {/* UI_SHELL_RENDER_END */}
+760 |  
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m

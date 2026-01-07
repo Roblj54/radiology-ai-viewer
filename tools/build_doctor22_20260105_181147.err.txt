@@ -1,0 +1,69 @@
+[31m✗[39m Build failed in 50ms
+[31merror during build:
+[31m[vite:esbuild] Transform failed with 6 errors:
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1058:89: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1059:109: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1060:86: ERROR: Unexpected closing "div" tag does not match opening "button" tag
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1078:13: ERROR: The character ">" is not valid inside a JSX element
+C:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1096:8: ERROR: Unexpected closing "div" tag does not match opening fragment tag
+...[31m
+file: [36mC:/Users/J-ROB/OneDrive/Documentos/Desktop/nodejs/radiology-ai-viewer/src/RadiologyColombiaViewer.tsx:1058:89[31m
+[33m
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+1056 |  
+1057 |  
+1058 |                <button onClick={() => updateViewport({ invert: !vp.invert })}>{t.invert}</div>
+     |                                                                                           ^
+1059 |                <button onClick={() => updateViewport({ rotation: ((vp.rotation ?? 0) + 90) % 360 })}>{t.rot}</div>
+1060 |                <button onClick={() => updateViewport({ hflip: !vp.hflip })}>{t.flipH}</div>
+
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+1057 |  
+1058 |                <button onClick={() => updateViewport({ invert: !vp.invert })}>{t.invert}</div>
+1059 |                <button onClick={() => updateViewport({ rotation: ((vp.rotation ?? 0) + 90) % 360 })}>{t.rot}</div>
+     |                                                                                                               ^
+1060 |                <button onClick={() => updateViewport({ hflip: !vp.hflip })}>{t.flipH}</div>
+1061 |                <button onClick={() => updateViewport({ vflip: !vp.vflip })}>{t.flipV}</button>
+
+[33mUnexpected closing "div" tag does not match opening "button" tag[33m
+1058 |                <button onClick={() => updateViewport({ invert: !vp.invert })}>{t.invert}</div>
+1059 |                <button onClick={() => updateViewport({ rotation: ((vp.rotation ?? 0) + 90) % 360 })}>{t.rot}</div>
+1060 |                <button onClick={() => updateViewport({ hflip: !vp.hflip })}>{t.flipH}</div>
+     |                                                                                        ^
+1061 |                <button onClick={() => updateViewport({ vflip: !vp.vflip })}>{t.flipV}</button>
+1062 |  
+
+[33mThe character ">" is not valid inside a JSX element[33m
+1076 |                  overflow: 'hidden',
+1077 |                }}
+1078 |              />
+     |               ^
+1079 |  
+1080 |              <div style={{ marginTop: 10 }}>
+
+[33mUnexpected closing "div" tag does not match opening fragment tag[33m
+1094 |            </div>
+1095 |          </div>
+1096 |        </div>
+     |          ^
+1097 |  
+1098 |        <style>{`
+
+[33mExpected identifier but found "`\r\n        button{\r\n          background:#0b1220;\r\n          color:#e5e7eb;\r\n          border:1px solid #334155;\r\n          padding:6px 10px;\r\n          border-radius:8px;\r\n          cursor:pointer;\r\n        }\r\n        button:hover{ border-color:#64748b; }\r\n        button:disabled{ opacity:0.5; cursor:not-allowed; }\r\n      `"[33m
+1096 |        </div>
+1097 |  
+1098 |        <style>{`
+     |                ^
+1099 |          button{
+1100 |            background:#0b1220;
+[31m
+    at failureErrorWithLog (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:1467:15)
+    at C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:736:50
+    at responseCallbacks.<computed> (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (C:\Users\J-ROB\OneDrive\Documentos\Desktop\nodejs\radiology-ai-viewer\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+    at Readable.push (node:internal/streams/readable:390:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)[39m
