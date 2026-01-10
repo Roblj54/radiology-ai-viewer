@@ -1,0 +1,1 @@
+The server is configured with a public base URL of /radiology-ai-viewer/ - did you mean to visit /radiology-ai-viewer/ui_shell_bilingual.html instead?

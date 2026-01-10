@@ -1,0 +1,21 @@
+{
+  "url": "https://Roblj54.github.io/radiology-ai-viewer/",
+  "fileInputs": 1,
+  "fileSet": true,
+  "fileCount": 30,
+  "firstFile": "C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\manifest-1554746803134\\QIN-BREAST-02\\QIN-BREAST-02-0001\\05-03-2003-NA-2065126682-15664\\7501.000000-DWIEPIb0200800-76277\\1-01.dcm",
+  "pre": {
+    "sliceText": "Corte 0 / 0",
+    "denom": 0,
+    "noSeries": true,
+    "textLen": 100
+  },
+  "post": {
+    "sliceText": "Corte 1 / 30",
+    "denom": 30,
+    "noSeries": false,
+    "textLen": 108
+  },
+  "errCount": 0,
+  "logs": []
+}

@@ -1,8 +1,5 @@
-﻿import React from "react";
-import { RadiologyColombiaViewer } from "./RadiologyColombiaViewer";
+import BilingualShell from "./BilingualShell";
 
-function App() {
-  return <RadiologyColombiaViewer />;
+export default function App() {
+  return <BilingualShell />;
 }
-
-export default App;

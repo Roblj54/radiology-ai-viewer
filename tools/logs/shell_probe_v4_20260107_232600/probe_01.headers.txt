@@ -1,0 +1,18 @@
+HTTP/1.1 302 Found
+Vary: Origin
+Location: /radiology-ai-viewer/
+Date: Thu, 08 Jan 2026 05:28:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"25a-cD68i5rsvxj3zeJi/+N9DzMvA/k"
+Date: Thu, 08 Jan 2026 05:28:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 602
+

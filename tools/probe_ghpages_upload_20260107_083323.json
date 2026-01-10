@@ -1,0 +1,18 @@
+{
+  "url": "https://Roblj54.github.io/radiology-ai-viewer/",
+  "dicomPath": "C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\test.dcm",
+  "fileInputs": 1,
+  "fileSet": true,
+  "pre": {
+    "sliceText": "Corte 0 / 0",
+    "noSeries": true,
+    "textLen": 100
+  },
+  "post": {
+    "sliceText": "Corte 1 / 1",
+    "noSeries": false,
+    "textLen": 106
+  },
+  "errCount": 0,
+  "logs": []
+}

@@ -1,8 +1,7 @@
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: "/radiology-ai-viewer/",
-  server: { host: "127.0.0.1" },
-  preview: { host: "127.0.0.1" },
-  esbuild: { jsx: "automatic" }
-});
+  base: '/radiology-ai-viewer/',
+  plugins: [react()],
+})

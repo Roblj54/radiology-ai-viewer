@@ -1,0 +1,757 @@
+const raiShellUrl = `${import.meta.env.BASE_URL}ui_shell_bilingual.html`;
+
+
+  // __RAI_WHEEL_SHIFT_WLWW__
+  // Wheel: Zoom only. Shift+Wheel: adjust WL/WW. Capture listener blocks any existing wheel-to-slice behavior.
+  useEffect(() => {
+    const el = iframeRef.current;
+    if (!el) return;
+
+    const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+    const onWheelCapture = (ev: WheelEvent) => {
+      try {
+        // Always prevent page scroll and stop delegated React wheel handlers
+        try { ev.preventDefault(); } catch (e) {}
+        try { ev.stopPropagation(); } catch (e) {}
+        try { (ev as any).stopImmediatePropagation?.(); } catch (e) {}
+
+        const raw = (Math.abs(ev.deltaY) >= Math.abs(ev.deltaX)) ? ev.deltaY : ev.deltaX;
+        if (!raw) return;
+
+        const steps = clamp(Math.round(Math.abs(raw) / 80), 1, 12);
+        const dir = (raw < 0) ? 1 : -1; // wheel up increases, wheel down decreases
+
+        const isShift = !!ev.shiftKey;
+
+        const tool = String((window as any).__raiTool || "ZOOM");
+
+        const wlMode = isShift || tool === "WL";
+        if (wlMode) {
+
+          setView((v: any) => {
+
+            const vv: any = { ...(v || {}) };
+
+        
+
+            // Prefer existing keys if present
+
+            const hasWindowKeys = ("windowCenter" in vv) || ("windowWidth" in vv);
+
+            const hasWcKeys     = ("wc" in vv) || ("ww" in vv);
+
+            const centerKey = hasWindowKeys ? "windowCenter" : (hasWcKeys ? "wc" : "wl");
+
+            const widthKey  = hasWindowKeys ? "windowWidth"  : "ww";
+
+        
+
+            const curC = Number(vv[centerKey] ?? 40);
+
+            const curW = Number(vv[widthKey]  ?? 400);
+
+        
+
+            const nextC = curC + ((-dir) * steps * 2);
+
+            const nextW = clamp(curW + ((-dir) * steps * 4), 1, 20000);
+
+        
+
+            vv[centerKey] = nextC;
+
+            vv[widthKey]  = nextW;
+
+        
+
+            // Keep ref hot for any draw loops
+
+            try { viewRef.current = { ...viewRef.current, ...vv }; } catch (e) {}
+
+        
+
+            // Best-effort sync back to shell (if function exists)
+
+            try { (syncShellViewState as any)?.({ windowCenter: vv.windowCenter, windowWidth: vv.windowWidth, wc: vv.wc, ww: vv.ww, wl: vv.wl }); } catch (e) {}
+
+        
+
+            return vv;
+
+          });
+
+          return;
+
+        }
+
+        // Zoom only (wheel alone)
+        setView((v: any) => {
+          const vv: any = { ...(v || {}) };
+          const curZ = Number(vv.zoom ?? 1);
+
+          // Smooth zoom curve. wheel up zooms in, wheel down zooms out.
+          const factor = Math.exp((-dir * steps) * 0.03);
+          const nextZ = clamp(curZ * factor, 0.05, 60);
+
+          vv.zoom = nextZ;
+
+          try { viewRef.current = { ...viewRef.current, ...vv }; } catch (e) {}
+          try { (syncShellViewState as any)?.({ zoom: vv.zoom, panX: vv.panX, panY: vv.panY, cinePlaying: vv.cinePlaying }); } catch (e) {}
+
+          return vv;
+        });
+      } catch (e) {}
+    };
+
+    el.addEventListener("wheel", onWheelCapture, { passive: false, capture: true } as any);
+    return () => {
+      try { el.removeEventListener("wheel", onWheelCapture, true); } catch (e) {}
+    };
+  }, []);
+import React, { useEffect, useRef, useState } from "react";
+import * as dicomParser from "dicom-parser";
+
+type RAIMessage = {
+  __rai: boolean;
+  source: "shell" | "host";
+  type: string;
+  payload?: any;
+};
+
+type SliceHeader = {
+  file: File;
+  instance: number;
+  rows: number;
+  cols: number;
+  bitsAllocated: number;
+  pixelRepresentation: number;
+  slope: number;
+  intercept: number;
+  photometric: string;
+  transferSyntax: string;
+  windowCenter: number | null;
+  windowWidth: number | null;
+  compressed: boolean;
+};
+
+type Series = {
+  slices: SliceHeader[];
+  rows: number;
+  cols: number;
+  wc: number | null;
+  ww: number | null;
+  photometric: string;
+};
+
+type ViewState = {
+  zoom: number;   // 1.0 = fit
+  panX: number;   // canvas px
+  panY: number;   // canvas px
+  cinePlaying: boolean;
+  fps: number;
+  cineDir: number;
+};
+
+const UNCOMPRESSED_TS = new Set<string>([
+  "1.2.840.10008.1.2",     // Implicit VR Little Endian
+  "1.2.840.10008.1.2.1",   // Explicit VR Little Endian
+  "1.2.840.10008.1.2.2"    // Explicit VR Big Endian
+]);
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+function pickFirstNumber(s: string | undefined | null): number | null {
+  if (!s) return null;
+  const first = s.split("\\")[0]?.trim();
+  if (!first) return null;
+  const n = Number(first);
+  return Number.isFinite(n) ? n : null;
+}
+
+async function readHeader(file: File): Promise<SliceHeader> {
+  const ab = await file.arrayBuffer();
+  const bytes = new Uint8Array(ab);
+  const ds = dicomParser.parseDicom(bytes);
+
+  const rows = ds.uint16("x00280010") || 0;
+  const cols = ds.uint16("x00280011") || 0;
+
+  const bitsAllocated = ds.uint16("x00280100") || 16;
+  const pixelRepresentation = ds.uint16("x00280103") || 0;
+
+  const slope = Number(ds.string("x00281053") || "1") || 1;
+  const intercept = Number(ds.string("x00281052") || "0") || 0;
+
+  const photometric = (ds.string("x00280004") || "MONOCHROME2").toUpperCase();
+  const transferSyntax = ds.string("x00020010") || "";
+
+  const instance = Number(ds.string("x00200013") || ds.string("x00200011") || "0") || 0;
+
+  const wc = pickFirstNumber(ds.string("x00281050"));
+  const ww = pickFirstNumber(ds.string("x00281051"));
+
+  const compressed = !UNCOMPRESSED_TS.has(transferSyntax);
+
+  return {
+    file,
+    instance,
+    rows,
+    cols,
+    bitsAllocated,
+    pixelRepresentation,
+    slope,
+    intercept,
+    photometric,
+    transferSyntax,
+    windowCenter: wc,
+    windowWidth: ww,
+    compressed
+  };
+}
+
+function bytesToWordArray(
+  pixelBytes: Uint8Array,
+  signed: boolean,
+  bigEndian: boolean
+): Int16Array | Uint16Array {
+  let buf: ArrayBuffer;
+  let byteOffset = pixelBytes.byteOffset;
+
+  if (byteOffset % 2 !== 0) {
+    const copy = new Uint8Array(pixelBytes.length);
+    copy.set(pixelBytes);
+    buf = copy.buffer;
+    byteOffset = 0;
+    pixelBytes = copy;
+  } else {
+    buf = pixelBytes.buffer;
+  }
+
+  if (!bigEndian) {
+    return signed
+      ? new Int16Array(buf, byteOffset, Math.floor(pixelBytes.length / 2))
+      : new Uint16Array(buf, byteOffset, Math.floor(pixelBytes.length / 2));
+  }
+
+  const n = Math.floor(pixelBytes.length / 2);
+  const out = new Uint8Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    out[i * 2] = pixelBytes[i * 2 + 1];
+    out[i * 2 + 1] = pixelBytes[i * 2];
+  }
+  return signed ? new Int16Array(out.buffer) : new Uint16Array(out.buffer);
+}
+
+function windowToByte(v: number, wc: number, ww: number): number {
+  const lo = wc - ww / 2;
+  const hi = wc + ww / 2;
+  if (hi <= lo) return 0;
+  const x = (v - lo) / (hi - lo);
+  const b = Math.round(x * 255);
+  return b < 0 ? 0 : b > 255 ? 255 : b;
+}
+
+async function decodeToImageData(
+  hdr: SliceHeader,
+  wc: number | null,
+  ww: number | null
+): Promise<{ img: ImageData; min: number; max: number; wc: number; ww: number }> {
+  if (hdr.compressed) {
+    throw new Error("Compressed DICOM is not supported in the mini-decoder yet (need JPEG/RLE decoder).");
+  }
+
+  const ab = await hdr.file.arrayBuffer();
+  const bytes = new Uint8Array(ab);
+  const ds = dicomParser.parseDicom(bytes);
+  const el = (ds.elements as any).x7fe00010;
+  if (!el || typeof el.dataOffset !== "number" || typeof el.length !== "number") {
+    throw new Error("Missing PixelData (7FE0,0010).");
+  }
+
+  const pixelBytes = new Uint8Array(ds.byteArray.buffer, el.dataOffset, el.length);
+  const bigEndian = hdr.transferSyntax === "1.2.840.10008.1.2.2";
+  const signed = hdr.pixelRepresentation === 1;
+
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+
+  const img = new ImageData(hdr.cols, hdr.rows);
+  const out = img.data;
+
+  if (hdr.bitsAllocated === 8) {
+    for (let i = 0; i < hdr.rows * hdr.cols; i++) {
+      const raw = pixelBytes[i];
+      const hu = raw * hdr.slope + hdr.intercept;
+      if (hu < min) min = hu;
+      if (hu > max) max = hu;
+    }
+  } else {
+    const arr = bytesToWordArray(pixelBytes, signed, bigEndian);
+    for (let i = 0; i < arr.length; i++) {
+      const raw = (arr as any)[i] as number;
+      const hu = raw * hdr.slope + hdr.intercept;
+      if (hu < min) min = hu;
+      if (hu > max) max = hu;
+    }
+  }
+
+  const useWc = (wc != null) ? wc : (min + max) / 2;
+  const useWw = (ww != null) ? ww : Math.max(1, (max - min));
+
+  const invert = hdr.photometric === "MONOCHROME1";
+
+  if (hdr.bitsAllocated === 8) {
+    for (let i = 0; i < hdr.rows * hdr.cols; i++) {
+      const raw = pixelBytes[i];
+      const hu = raw * hdr.slope + hdr.intercept;
+      let b = windowToByte(hu, useWc, useWw);
+      if (invert) b = 255 - b;
+      const o = i * 4;
+      out[o + 0] = b;
+      out[o + 1] = b;
+      out[o + 2] = b;
+      out[o + 3] = 255;
+    }
+  } else {
+    const arr = bytesToWordArray(pixelBytes, signed, bigEndian);
+    for (let i = 0; i < arr.length; i++) {
+      const raw = (arr as any)[i] as number;
+      const hu = raw * hdr.slope + hdr.intercept;
+      let b = windowToByte(hu, useWc, useWw);
+      if (invert) b = 255 - b;
+      const o = i * 4;
+      out[o + 0] = b;
+      out[o + 1] = b;
+      out[o + 2] = b;
+      out[o + 3] = 255;
+    }
+  }
+
+  return { img, min, max, wc: useWc, ww: useWw };
+}
+
+export default function BilingualShell() {
+  
+  const shellSrc = ${import.meta.env.BASE_URL}ui_shell_bilingual.html;const base = (import.meta as any).env?.BASE_URL || "/";
+  const src = base.replace(/\/?$/, "/") + "ui_shell_bilingual.html";
+
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const renderTokenRef = useRef(0);
+
+  const [connected, setConnected] = useState(false);
+  const [series, setSeries] = useState<Series | null>(null);
+  const seriesRef = useRef<Series | null>(null);
+
+  const [view, setView] = useState<ViewState>({ zoom: 1, panX: 0, panY: 0, cinePlaying: false, fps: 12, cineDir: 1 });
+  const viewRef = useRef<ViewState>(view);
+
+  const sliceRef = useRef(1);
+  const cineTimerRef = useRef<number | null>(null);
+
+  useEffect(() => { seriesRef.current = series; }, [series]);
+  useEffect(() => { viewRef.current = view; }, [view]);
+
+  function postToShell(type: string, payload?: any) {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    const msg: RAIMessage = { __rai: true, source: "host", type, payload: payload || {} };
+    win.postMessage(msg, "*");
+  }
+
+  function syncShellViewState(partial?: Partial<ViewState>, seriesOverride?: Series | null) {
+    const v = { ...viewRef.current, ...(partial || {}) };
+    const s = seriesOverride ?? seriesRef.current;
+    postToShell("host:viewState", {
+      zoom: v.zoom,
+      cinePlaying: v.cinePlaying,
+      fps: v.fps,
+      cineDir: v.cineDir,
+      wc: s?.wc ?? null,
+      ww: s?.ww ?? null
+    });
+  }
+
+  function ensureCanvas() {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return null;
+    const host = doc.getElementById("dicom");
+    if (!host) return null;
+
+    let canvas = doc.getElementById("hostDicomCanvas") as HTMLCanvasElement | null;
+    if (!canvas) {
+      canvas = doc.createElement("canvas");
+      canvas.id = "hostDicomCanvas";
+      canvas.style.position = "absolute";
+      canvas.style.left = "0";
+      canvas.style.top = "0";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.zIndex = "0";
+      host.insertBefore(canvas, host.firstChild);
+    }
+
+    const rect = host.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width));
+    const h = Math.max(1, Math.floor(rect.height));
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    return { host, canvas, ctx };
+  }
+
+  async function renderSlice(index1: number) {
+    const s = seriesRef.current;
+    if (!s) return;
+
+    const idx = clamp(index1, 1, s.slices.length);
+    sliceRef.current = idx;
+
+    const hdr = s.slices[idx - 1];
+    const token = ++renderTokenRef.current;
+
+    try {
+      const slot = ensureCanvas();
+      if (!slot) return;
+
+      const decoded = await decodeToImageData(hdr, s.wc, s.ww);
+      if (token !== renderTokenRef.current) return;
+
+      if (s.wc == null || s.ww == null) {
+        const next: Series = { ...s, wc: decoded.wc, ww: decoded.ww };
+        setSeries(next);
+        seriesRef.current = next;
+        syncShellViewState(undefined, next);
+      }
+
+      const { ctx, canvas } = slot;
+
+      const off = document.createElement("canvas");
+      off.width = hdr.cols;
+      off.height = hdr.rows;
+      const offCtx = off.getContext("2d");
+      if (!offCtx) return;
+      offCtx.putImageData(decoded.img, 0, 0);
+
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const fitScale = Math.min(canvas.width / hdr.cols, canvas.height / hdr.rows);
+      const zoom = clamp(viewRef.current.zoom, 0.1, 10);
+      const sc = fitScale * zoom;
+
+      const dw = Math.floor(hdr.cols * sc);
+      const dh = Math.floor(hdr.rows * sc);
+
+      const dx = Math.floor((canvas.width - dw) / 2) + Math.round(viewRef.current.panX);
+      const dy = Math.floor((canvas.height - dh) / 2) + Math.round(viewRef.current.panY);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, dx, dy, dw, dh);
+    } catch (e: any) {
+      const slot = ensureCanvas();
+      if (!slot) return;
+      const { ctx, canvas } = slot;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px sans-serif";
+      ctx.fillText(String(e?.message || e), 16, 30);
+    }
+  }
+
+  function stopCine() {
+    if (cineTimerRef.current != null) {
+      window.clearInterval(cineTimerRef.current);
+      cineTimerRef.current = null;
+    }
+  }
+
+  function startCine(fps: number) {
+    stopCine();
+    const safeFps = clamp(Math.round(fps || 12), 1, 60);
+    const ms = Math.max(10, Math.floor(1000 / safeFps));
+    cineTimerRef.current = window.setInterval(() => {
+      const s = seriesRef.current;
+      if (!s) return;      const dir = (viewRef.current.cineDir === -1) ? -1 : 1;
+      const len = s.slices.length;
+      const cur = sliceRef.current;
+      const next = (dir === 1)
+        ? ((cur >= len) ? 1 : (cur + 1))
+        : ((cur <= 1) ? len : (cur - 1));sliceRef.current = next;
+      postToShell("host:setSlice", { index: next });
+      renderSlice(next);
+    }, ms) as any;
+  }
+
+  async function loadSeries(files: File[]) {
+    postToShell("host:status", { statusHtml: "Loading DICOM headers..." });
+
+    const headers: SliceHeader[] = [];
+    for (const f of files) {
+      try { headers.push(await readHeader(f)); } catch {}
+    }
+    if (!headers.length) throw new Error("No readable DICOM files selected.");
+
+    const usable = headers.filter(h => h.rows > 0 && h.cols > 0);
+    if (!usable.length) throw new Error("DICOM headers missing Rows/Columns.");
+
+    usable.sort((a, b) => (a.instance - b.instance) || a.file.name.localeCompare(b.file.name));
+
+    const rows = usable[0].rows;
+    const cols = usable[0].cols;
+    const photometric = usable[0].photometric || "MONOCHROME2";
+
+    const wc = usable[0].windowCenter;
+    const ww = usable[0].windowWidth;
+
+    const s: Series = { slices: usable, rows, cols, wc: wc ?? null, ww: ww ?? null, photometric };
+    setSeries(s);
+    seriesRef.current = s;
+
+    postToShell("host:seriesLoaded", { total: usable.length });
+    postToShell("host:status", { statusHtml: "DICOM loaded. Use slice controls, tools on top right." });
+
+    syncShellViewState(undefined, s);
+
+    setView(v => ({ ...v, zoom: 1, panX: 0, panY: 0, cinePlaying: false, cineDir: 1 }));
+    stopCine();
+
+    await renderSlice(1);
+  }
+
+  useEffect(() => {
+    function onMessage(ev: MessageEvent) {
+      const m = ev.data as RAIMessage;
+      if (!m || !m.__rai || m.source !== "shell") return;
+
+      if (m.type === "shell:ready") {
+        setConnected(true);
+        postToShell("host:status", { statusHtml: "Bridge connected." });
+        syncShellViewState();
+        return;
+      }
+
+      if (m.type === "shell:dicomFilesSelected") {
+        const files = (m.payload && m.payload.files) ? (m.payload.files as File[]) : [];
+        if (!files || files.length < 1) return;
+        loadSeries(files).catch(err => {
+          postToShell("host:status", { statusHtml: "Load failed: " + String(err?.message || err) });
+        });
+        return;
+      }
+
+      if (m.type === "shell:setSlice") {
+        const s = seriesRef.current;
+        if (!s) return;
+        const idx = clamp(Number(m.payload?.index || 1), 1, s.slices.length);
+        renderSlice(idx);
+        return;
+      }
+
+      if (m.type === "shell:step") {
+        const s = seriesRef.current;
+        if (!s) return;
+        const delta = Number(m.payload?.delta || 0) || 0;
+        const next = clamp(sliceRef.current + delta, 1, s.slices.length);
+        sliceRef.current = next;
+        postToShell("host:setSlice", { index: next });
+        renderSlice(next);
+        return;
+      }
+
+      if (m.type === "shell:reset") {
+        const s = seriesRef.current;
+        if (!s) return;
+        sliceRef.current = 1;
+        postToShell("host:setSlice", { index: 1 });
+        renderSlice(1);
+        return;
+      }
+
+      if (m.type === "shell:wlww") {
+        const s = seriesRef.current;
+        if (!s) return;
+        const wc = Number(m.payload?.wc);
+        const ww = Math.max(1, Number(m.payload?.ww));
+        const next: Series = { ...s, wc: Number.isFinite(wc) ? wc : s.wc, ww: Number.isFinite(ww) ? ww : s.ww };
+        setSeries(next);
+        seriesRef.current = next;
+        syncShellViewState(undefined, next);
+        renderSlice(sliceRef.current);
+        return;
+      }
+
+      if (m.type === "shell:zoom") {
+        const z = clamp(Number(m.payload?.zoom || 1), 0.5, 4);
+        setView(v => {
+          const next = { ...v, zoom: z };
+          return next;
+        });
+        // render after state update
+        setTimeout(() => { renderSlice(sliceRef.current); }, 0);
+        return;
+      }
+
+      if (m.type === "shell:panDelta") {
+        const dx = Number(m.payload?.dx || 0) || 0;
+        const dy = Number(m.payload?.dy || 0) || 0;
+        setView(v => ({ ...v, panX: v.panX + dx, panY: v.panY + dy }));
+        setTimeout(() => { renderSlice(sliceRef.current); }, 0);
+        return;
+      }
+
+      if (m.type === "shell:fit" || m.type === "shell:resetView") {
+        setView(v => ({ ...v, zoom: 1, panX: 0, panY: 0 }));
+        setTimeout(() => { renderSlice(sliceRef.current); }, 0);
+        return;
+      }
+
+      if (m.type === "shell:fps") {
+        const fps = clamp(Math.round(Number(m.payload?.fps || 12)), 1, 60);
+        setView(v => ({ ...v, fps }));
+        syncShellViewState({ fps });
+        if (viewRef.current.cinePlaying) startCine(fps);
+        return;
+      }
+
+            if (m.type === "shell:cineDir") {
+        const dir = (Number(m.payload?.dir) === -1) ? -1 : 1;
+        // keep ref updated immediately for running cine interval
+        viewRef.current = { ...viewRef.current, cineDir: dir };
+        setView(v => ({ ...v, cineDir: dir }));
+        syncShellViewState({ cineDir: dir });
+        return;
+      }
+if \(m\.type === "shell:cineToggle"\) \{
+        const fps = clamp(Math.round(Number(m.payload?.fps || viewRef.current.fps || 12)), 1, 60);
+        setView(v => {
+          const nowPlaying = !v.cinePlaying;
+          const next = { ...v, cinePlaying: nowPlaying, fps };
+          return next;
+        });
+
+        const nextPlaying = !viewRef.current.cinePlaying;
+        if (nextPlaying) startCine(fps);
+        else stopCine();
+
+        syncShellViewState({ cinePlaying: nextPlaying, fps });
+        return;
+      }
+    }
+
+    window.addEventListener("message", onMessage);
+    const onResize = () => { renderSlice(sliceRef.current); };
+    window.addEventListener("resize", onResize);
+
+  // __RAI_SHELL_POSTMSG_BRIDGE__
+  useEffect(() => {
+    try { (window as any).__raiTool = (window as any).__raiTool || "ZOOM"; } catch (e) {}
+
+    const postToShell = (type: string, payload?: any) => {
+      try {
+        iframeRef.current?.contentWindow?.postMessage({ __rai: true, source: "host", type, payload: payload || {} }, "*");
+      } catch (e) {}
+    };
+
+    const onMsg = (e: MessageEvent) => {
+      try {
+        const shellWin = iframeRef.current?.contentWindow;
+        if (shellWin && e.source !== shellWin) return;
+
+        const d: any = (e as any).data || {};
+        if (!d) return;
+
+        const type = String(d.type || "");
+        const payload = d.payload || {};
+
+        // Accept messages from the UI shell
+        if (d.__rai === true && d.source !== "shell") return;
+        if (type !== "RAI_ACTION") return;
+
+        const action = String(payload.action || "");
+
+        if (action === "SET_TOOL") {
+          const tool = String(payload.tool || "ZOOM").toUpperCase();
+          try { (window as any).__raiTool = tool; } catch (e) {}
+          postToShell("SYNC_TOOL", { tool });
+          return;
+        }
+
+        if (action === "PAN_BY") {
+          const dx = Number(payload.dx || 0);
+          const dy = Number(payload.dy || 0);
+          if (!dx && !dy) return;
+
+          setView((v: any) => {
+            const vv: any = { ...(v || {}) };
+            vv.panX = Number(vv.panX || 0) + dx;
+            vv.panY = Number(vv.panY || 0) + dy;
+
+            try { viewRef.current = { ...viewRef.current, ...vv }; } catch (e) {}
+
+            // Best effort: keep UI shell updated if it listens
+            postToShell("SYNC_VIEW", { panX: vv.panX, panY: vv.panY, tool: (window as any).__raiTool || "ZOOM" });
+
+            return vv;
+          });
+          return;
+        }
+
+        if (action === "OPEN_FILES") {
+          // If you already have a file picker in the host, keep using it.
+          // Intentionally no-op here to avoid browser "user gesture" blocks.
+          return;
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("message", onMsg);
+    postToShell("SYNC_TOOL", { tool: (window as any).__raiTool || "ZOOM" });
+
+    return () => {
+      try { window.removeEventListener("message", onMsg); } catch (e) {}
+    };
+  }, []);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.removeEventListener("resize", onResize);
+      stopCine();
+    };
+  }, []);
+
+  useEffect(() => {
+    // keep shell in sync when view changes
+    syncShellViewState();
+  }, [view.zoom, view.cinePlaying, view.fps, view.cineDir]);
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", margin: 0, padding: 0 }}>
+      <iframe
+        ref={iframeRef}
+        title="Radiology AI Viewer UI Shell" src={shellSrc}
+        onLoad={() => { setTimeout(() => { ensureCanvas(); }, 250); }}
+        style={{ width: "100%", height: "100%", border: "0" }}
+      />
+      <div style={{
+        position: "fixed",
+        left: 12,
+        bottom: 12,
+        padding: "6px 10px",
+        background: "rgba(0,0,0,0.55)",
+        color: "#fff",
+        borderRadius: 10,
+        fontFamily: "system-ui, sans-serif",
+        fontSize: 12,
+        pointerEvents: "none"
+      }}>
+        Bridge: {connected ? "connected" : "waiting"} | Series: {series ? series.slices.length : 0} | Slice: {sliceRef.current}
+      </div>
+    </div>
+  );
+}
