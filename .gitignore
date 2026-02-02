@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 .vite/
 .DS_Store
@@ -57,3 +57,10 @@ New Text Document.txt
 *.disabled_*
 *.disabled
 logs_orchestrator/
+
+# RAI autopilot ignores
+.rai_logs/
+.rai_autofix_backups/
+*.bak
+*.bak.*
+*.disabled_*
