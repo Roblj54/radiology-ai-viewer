@@ -39,3 +39,12 @@ ai_backend/
 reset_backup_*
 legacy_moved_by_reset*
 *.bak_*
+logs_priority_runner/
+logs_autopilot/
+logs_orchestrator/
+# ---- autopilot ignores ----
+logs*/
+*.tmp
+*.disabled
+.rai_autopilot/
+.logs/
