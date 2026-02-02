@@ -48,3 +48,12 @@ logs*/
 *.disabled
 .rai_autopilot/
 .logs/
+# Local scratch and scripts
+*.ps1
+New Text Document.txt
+
+# Backup patterns
+*.bak*
+*.disabled_*
+*.disabled
+logs_orchestrator/
