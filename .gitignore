@@ -64,3 +64,6 @@ logs_orchestrator/
 *.bak
 *.bak.*
 *.disabled_*
+
+_rai_logs/
+
