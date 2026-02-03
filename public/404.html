@@ -1,0 +1,21 @@
+﻿<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var l = window.location;
+        var parts = l.pathname.split('/').filter(Boolean);
+        if (parts.length >= 1) {
+          var repo = parts[0];
+          var rest = parts.slice(1).join('/');
+          l.replace(l.origin + '/' + repo + '/?/' + rest + l.search + l.hash);
+        } else {
+          l.replace(l.origin + l.search + l.hash);
+        }
+      })();
+    </script>
+  </head>
+  <body>Redirecting...</body>
+</html>
