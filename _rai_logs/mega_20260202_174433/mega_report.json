@@ -1,0 +1,34 @@
+﻿{
+    "repoRoot":  "C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer",
+    "repoName":  "radiology-ai-viewer",
+    "expectedBase":  "/radiology-ai-viewer/",
+    "autoFix":  false,
+    "ensureWorkflow":  false,
+    "scans":  {
+                  "backupNoiseCount":  30,
+                  "viteConfig":  "C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\vite.config.mjs",
+                  "pagesWorkflowExists":  true,
+                  "ciWorkflowExists":  false,
+                  "distIndexExists":  true,
+                  "distBaseOk":  true,
+                  "detectedScripts":  [
+                                          "build",
+                                          "dev",
+                                          "preview"
+                                      ]
+              },
+    "fixes":  {
+                  "gitignoreUpdated":  false,
+                  "viteConfigCreated":  false,
+                  "viteConfigNote":  "",
+                  "viteBaseInjected":  false,
+                  "viteBaseNote":  "",
+                  "pagesWorkflowCreated":  false,
+                  "ciWorkflowCreated":  false
+              },
+    "taskResults":  [
+
+                    ],
+    "logs":  "C:\\Users\\J-ROB\\OneDrive\\Documentos\\Desktop\\nodejs\\radiology-ai-viewer\\_rai_logs\\mega_20260202_174433",
+    "timestamp":  "2026-02-02T17:44:44"
+}
