@@ -77,3 +77,7 @@ _rai_logs/
 # Radiology AI autopilot
 .rai/
 
+
+# Local autopilot logs
+rai_autopilot_*.log.txt
+
