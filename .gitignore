@@ -1,4 +1,4 @@
-node_modules/
+﻿node_modules/
 dist/
 .vite/
 .DS_Store
@@ -66,4 +66,14 @@ logs_orchestrator/
 *.disabled_*
 
 _rai_logs/
+
+
+# RAI autopilot hygiene
+.rai-backups/
+
+.rai-logs/
+
+
+# Radiology AI autopilot
+.rai/
 
