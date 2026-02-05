@@ -1,21 +1,21 @@
 ﻿<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Redirecting...</title>
-    <script>
-      (function () {
-        var l = window.location;
-        var parts = l.pathname.split('/').filter(Boolean);
-        if (parts.length >= 1) {
-          var repo = parts[0];
-          var rest = parts.slice(1).join('/');
-          l.replace(l.origin + '/' + repo + '/?/' + rest + l.search + l.hash);
-        } else {
-          l.replace(l.origin + l.search + l.hash);
-        }
-      })();
-    </script>
-  </head>
-  <body>Redirecting...</body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redirecting...</title>
+  <!-- RAI_SPA_404_AUTOPILOT -->
+  <script type="text/javascript">
+    (function() {
+      var segmentCount = 1;
+      var l = window.location;
+      var path = l.pathname.split('/').slice(0, 1 + segmentCount).join('/');
+      var rest = l.pathname.split('/').slice(1 + segmentCount).join('/');
+      var search = l.search ? l.search.slice(1).replace(/&/g, '~and~') : '';
+      var target = l.protocol + '//' + l.host + path + '/?/' + rest.replace(/&/g, '~and~') + (search ? '&' + search : '') + l.hash;
+      l.replace(target);
+    })();
+  </script>
+</head>
+<body>Redirecting...</body>
 </html>
