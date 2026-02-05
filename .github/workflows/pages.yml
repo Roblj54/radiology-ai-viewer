@@ -32,6 +32,16 @@ jobs:
       - name: Build
         run: npm run build
 
+
+      - name: Verify dist output
+
+        run: |
+
+          test -d dist
+
+          test -f dist/index.html
+
+          ls -la dist | head -100
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v4
@@ -47,3 +57,4 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
